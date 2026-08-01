@@ -1,10 +1,35 @@
 # Shelf
 
+**Live: https://atharva-273.github.io/shelf/**
+
 Scan a bookshelf into a searchable library. Point the camera at the barcode on
 the back of a book, hear a beep, move on. Local-first, free to run, no account.
 
 Built for cataloguing a few hundred books in one sitting — roughly **10 seconds
 a book**, so a 400-book shelf is an afternoon rather than a week.
+
+---
+
+## The portfolio export
+
+A `.json` backup is the right artifact for *restoring* a library and the wrong
+one for *showing* it. Settings → **Create shareable portfolio** produces a
+single self-contained HTML page — covers, search, read/reading/unread filters,
+tap a book for details — that can be emailed, AirDropped or dropped into a
+WhatsApp thread and opened by anyone with a browser.
+
+- Every cover is inlined as a downscaled data URI (220px, JPEG 0.72), so the
+  file works offline and doesn't depend on Open Library staying up. Budget
+  roughly **13 KB per book** — a 400-book portfolio lands around 5 MB.
+- **Private fields are excluded by design.** Notes and shelf locations never
+  leave the device inside a file meant to be broadcast; "lent to Priya" is not
+  something you want in a book-club attachment.
+- On Android it goes through the Web Share API, so it lands one tap from
+  WhatsApp. Everywhere else it downloads.
+
+Open Library serves permissive CORS headers, so its covers can be read off a
+canvas and inlined. Google Books does not — those books fall back to a
+typographic tile rather than failing.
 
 ---
 
@@ -133,11 +158,26 @@ noticeably better than `en-US`. Change it in `hooks/use-speech.ts`.
 
 ## Deploying
 
-It's a static site — any host works.
+Pushing to `main` deploys to GitHub Pages automatically via
+`.github/workflows/deploy.yml`. No manual step.
 
 ```bash
-npm run build   # → dist/
+git push          # → https://atharva-273.github.io/shelf/
 ```
 
-Cloudflare Pages, Netlify, and GitHub Pages are all free and give HTTPS, which
-the camera needs.
+To build locally for a subpath:
+
+```bash
+VITE_BASE_PATH=/shelf/ npm run build   # → dist/
+```
+
+`VITE_BASE_PATH` matters because Pages serves a project repo from `/<repo>/`.
+Anything referencing a `public/` file must go through `import.meta.env.BASE_URL`
+(TypeScript) or `%BASE_URL%` (HTML) rather than a bare leading slash — the WASM
+binary and the manifest both do.
+
+### A note on origins
+
+The library lives in IndexedDB, which is **scoped per origin**. Books added on
+`localhost:5173` will not appear on the deployed site and vice versa. That's a
+browser guarantee, not a bug. Move data between them with the backup file.
