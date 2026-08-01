@@ -1,0 +1,191 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+
+    /* Shelf: custom accent tokens (kept separate from shadcn's --accent,
+       which drives subtle menu/hover states and must stay neutral). */
+    --color-ochre: var(--ochre);
+    --color-ochre-foreground: var(--ochre-foreground);
+    --color-ochre-muted: var(--ochre-muted);
+    --color-plum: var(--plum);
+    --color-plum-foreground: var(--plum-foreground);
+
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    /* white / near-black / deep violet, with ochre as the single accent */
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0.018 292);
+
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0.018 292);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0.018 292);
+
+    /* deep violet — saturated enough to never read as black */
+    --primary: oklch(0.472 0.208 293);
+    --primary-foreground: oklch(0.99 0.003 292);
+
+    --secondary: oklch(0.965 0.012 292);
+    --secondary-foreground: oklch(0.32 0.115 293);
+
+    --muted: oklch(0.968 0.008 292);
+    --muted-foreground: oklch(0.505 0.032 292);
+
+    /* shadcn's neutral hover token — deliberately NOT the ochre */
+    --accent: oklch(0.958 0.016 292);
+    --accent-foreground: oklch(0.32 0.115 293);
+
+    --destructive: oklch(0.577 0.245 27.325);
+
+    --border: oklch(0.916 0.009 292);
+    --input: oklch(0.916 0.009 292);
+    --ring: oklch(0.472 0.208 293);
+
+    /* Shelf accents */
+    --ochre: oklch(0.742 0.144 79);
+    --ochre-foreground: oklch(0.21 0.045 79);
+    --ochre-muted: oklch(0.962 0.038 86);
+    --plum: oklch(0.245 0.098 293);
+    --plum-foreground: oklch(0.985 0.006 292);
+
+    --chart-1: oklch(0.472 0.208 293);
+    --chart-2: oklch(0.742 0.144 79);
+    --chart-3: oklch(0.62 0.16 293);
+    --chart-4: oklch(0.75 0.09 293);
+    --chart-5: oklch(0.245 0.098 293);
+
+    --radius: 0.75rem;
+
+    --sidebar: oklch(0.985 0.006 292);
+    --sidebar-foreground: oklch(0.145 0.018 292);
+    --sidebar-primary: oklch(0.472 0.208 293);
+    --sidebar-primary-foreground: oklch(0.99 0.003 292);
+    --sidebar-accent: oklch(0.958 0.016 292);
+    --sidebar-accent-foreground: oklch(0.32 0.115 293);
+    --sidebar-border: oklch(0.916 0.009 292);
+    --sidebar-ring: oklch(0.472 0.208 293);
+}
+
+.dark {
+    --background: oklch(0.135 0.021 293);
+    --foreground: oklch(0.968 0.006 292);
+
+    --card: oklch(0.183 0.028 293);
+    --card-foreground: oklch(0.968 0.006 292);
+    --popover: oklch(0.183 0.028 293);
+    --popover-foreground: oklch(0.968 0.006 292);
+
+    /* lifted so it stays legibly violet on a dark ground */
+    --primary: oklch(0.648 0.196 293);
+    --primary-foreground: oklch(0.135 0.021 293);
+
+    --secondary: oklch(0.248 0.042 293);
+    --secondary-foreground: oklch(0.968 0.006 292);
+
+    --muted: oklch(0.248 0.042 293);
+    --muted-foreground: oklch(0.705 0.028 292);
+
+    --accent: oklch(0.268 0.048 293);
+    --accent-foreground: oklch(0.968 0.006 292);
+
+    --destructive: oklch(0.704 0.191 22.216);
+
+    --border: oklch(1 0 0 / 11%);
+    --input: oklch(1 0 0 / 16%);
+    --ring: oklch(0.648 0.196 293);
+
+    --ochre: oklch(0.788 0.142 82);
+    --ochre-foreground: oklch(0.19 0.042 82);
+    --ochre-muted: oklch(0.31 0.062 82);
+    --plum: oklch(0.225 0.075 293);
+    --plum-foreground: oklch(0.968 0.006 292);
+
+    --chart-1: oklch(0.648 0.196 293);
+    --chart-2: oklch(0.788 0.142 82);
+    --chart-3: oklch(0.55 0.17 293);
+    --chart-4: oklch(0.42 0.13 293);
+    --chart-5: oklch(0.30 0.09 293);
+
+    --sidebar: oklch(0.183 0.028 293);
+    --sidebar-foreground: oklch(0.968 0.006 292);
+    --sidebar-primary: oklch(0.648 0.196 293);
+    --sidebar-primary-foreground: oklch(0.135 0.021 293);
+    --sidebar-accent: oklch(0.268 0.048 293);
+    --sidebar-accent-foreground: oklch(0.968 0.006 292);
+    --sidebar-border: oklch(1 0 0 / 11%);
+    --sidebar-ring: oklch(0.648 0.196 293);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+@layer utilities {
+  /*
+    Respect the notch / home indicator, but keep a floor: the inset is 0 on
+    devices without a notch and in desktop browsers, which would otherwise sit
+    the header flush against the top edge.
+  */
+  /* Floor matches `pt-3`/`pb-1`, so it doesn't matter which utility wins. */
+  .pt-safe { padding-top: max(env(safe-area-inset-top), 0.75rem); }
+  .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.25rem); }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
