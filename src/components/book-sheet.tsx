@@ -97,7 +97,7 @@ export function BookSheet({
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
           {attention && (
-            <div className="rounded-xl border border-ochre/40 bg-ochre-muted px-3 py-2.5">
+            <div className="rounded-2xl border border-ochre/40 bg-ochre-muted px-3.5 py-3">
               <p className="text-sm font-medium text-ochre-foreground">Needs your input</p>
               <p className="mt-0.5 text-xs text-ochre-foreground/80">
                 {draft.isbn13

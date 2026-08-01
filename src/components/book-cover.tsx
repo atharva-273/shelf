@@ -110,6 +110,12 @@ export function BookCover({
           alt={book.title ? `Cover of ${book.title}` : 'Book cover'}
           loading="lazy"
           decoding="async"
+          ref={(node) => {
+            // An image already in the HTTP cache finishes loading before React
+            // attaches onLoad, so without this every tab switch re-runs the
+            // fade and the placeholder flashes through a cover we already have.
+            if (node?.complete && node.naturalWidth > 2) setLoaded(true)
+          }}
           className={cn(
             'absolute inset-0 size-full bg-secondary object-cover transition-opacity duration-200',
             loaded ? 'opacity-100' : 'opacity-0',

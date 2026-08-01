@@ -114,13 +114,20 @@ export function LibraryView({
           </div>
         </div>
 
-        <div className="relative pb-3">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        {/*
+          Flex-centred icon rather than absolute + translate: with a pill input
+          the optical centre and the geometric centre differ enough that the
+          translate approach leaves the glyph sitting a pixel or two low.
+        */}
+        <div className="relative flex items-center pb-3">
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center pb-3 text-muted-foreground">
+            <SearchIcon className="size-4" />
+          </span>
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search your shelf"
-            className="h-10 pl-9"
+            className="pl-11"
             autoComplete="off"
           />
         </div>
@@ -214,8 +221,12 @@ function GridCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
           </span>
         )}
       </div>
-      {/* Fixed heights keep the grid rows aligned however the titles wrap. */}
-      <p className="mt-1.5 line-clamp-2 h-[2.1rem] text-xs leading-tight font-medium">
+      {/*
+        min-h, not h: an explicit height fights `line-clamp-2` and clips
+        descenders on the second line. Reserving the space instead keeps
+        one- and two-line cards aligned without ever cutting the text.
+      */}
+      <p className="mt-2 line-clamp-2 min-h-[2.25rem] text-xs leading-[1.35] font-medium">
         {book.title || 'Untitled'}
       </p>
       <p className="line-clamp-1 text-[11px] leading-tight text-muted-foreground">

@@ -10,6 +10,12 @@
     />
     <meta name="theme-color" content="#6D28D9" />
     <meta name="description" content="Scan your bookshelf into a searchable library." />
+    <!--
+      Installing to the home screen is what makes Chrome grant persistent
+      storage without prompting — see src/lib/storage.ts.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>Shelf</title>
   </head>
   <body>

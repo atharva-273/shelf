@@ -133,7 +133,7 @@ export function SearchAddSheet({
       >
         <SheetHeader className="shrink-0 border-b px-4 pt-4 pb-3">
           <SheetTitle className="text-base">
-            {manual ? 'Add by hand' : 'Find a book'}
+            {manual ? 'Add by hand' : 'Add a book to your library'}
           </SheetTitle>
           {prefillIsbn && (
             <p className="text-xs text-muted-foreground">
@@ -152,8 +152,10 @@ export function SearchAddSheet({
         ) : (
           <>
             <div className="shrink-0 px-4 py-3">
-              <div className="relative">
-                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative flex items-center">
+                <span className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-muted-foreground">
+                  <SearchIcon className="size-4" />
+                </span>
                 <Input
                   ref={inputRef}
                   value={query}
@@ -162,19 +164,16 @@ export function SearchAddSheet({
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  className={cn('h-12 pl-9 text-base', voiceSupported && 'pr-12')}
+                  className={cn('h-12 pl-11 text-base', voiceSupported && 'pr-13')}
                 />
                 {voiceSupported && (
                   <Button
                     type="button"
-                    size="icon"
+                    size="icon-sm"
                     variant={listening ? 'default' : 'ghost'}
                     onClick={toggle}
                     aria-label={listening ? 'Stop listening' : 'Speak the title'}
-                    className={cn(
-                      'absolute top-1/2 right-1.5 size-9 -translate-y-1/2 rounded-lg',
-                      listening && 'animate-pulse',
-                    )}
+                    className={cn('absolute right-1.5', listening && 'animate-pulse')}
                   >
                     <MicIcon className="size-4" />
                   </Button>

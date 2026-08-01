@@ -1,0 +1,19 @@
+{
+  "name": "Shelf",
+  "short_name": "Shelf",
+  "description": "Scan your bookshelf into a searchable library.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#6D28D9",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

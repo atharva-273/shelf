@@ -31,9 +31,10 @@ interface ScanEntry {
 }
 
 /**
- * Continuous scanning. She never taps the screen between books — pull, flip,
- * beep, reshelve. Lookups run in the background so a slow network never blocks
- * the next scan.
+ * Continuous scanning. The camera starts the moment this tab opens and keeps
+ * running until she navigates away — there is deliberately no pause control,
+ * because stopping is never what you want mid-sweep. Lookups run in the
+ * background so a slow network never blocks the next book.
  */
 export function ScanView({
   onOpenSearch,
@@ -43,8 +44,6 @@ export function ScanView({
   onOpenBook: (book: Book) => void
 }) {
   const [entries, setEntries] = useState<ScanEntry[]>([])
-  const [sessionCount, setSessionCount] = useState(0)
-  const [active, setActive] = useState(true)
   const inFlight = useRef<Set<string>>(new Set())
 
   const update = useCallback((key: string, patch: Partial<ScanEntry>) => {
@@ -91,14 +90,12 @@ export function ScanView({
             await addBook(placeholder)
             feedbackMiss()
             update(key, { outcome: 'missing', book: placeholder })
-            setSessionCount((n) => n + 1)
             return
           }
 
           const book = bookFromLookup(result, { id: isbn13, isbn13 })
           await addBook(book)
           update(key, { outcome: 'added', book })
-          setSessionCount((n) => n + 1)
           // Summaries get filled in afterwards so they don't slow the sweep.
           scheduleEnrichment()
         } catch (error) {
@@ -113,9 +110,11 @@ export function ScanView({
     [update],
   )
 
+  // Always on. Navigating to another tab unmounts this view, which stops the
+  // camera through the hook's cleanup.
   const { videoRef, state, error, torchOn, torchAvailable, toggleTorch, restart } = useScanner({
     onDetect: handleDetect,
-    enabled: active,
+    enabled: true,
   })
 
   useEffect(() => {
@@ -123,35 +122,12 @@ export function ScanView({
   }, [])
 
   const latest = entries[0]
+  const hasEntries = entries.length > 0
 
   return (
     <div className="flex h-full flex-col bg-[oklch(0.135_0.021_293)] text-white">
-      {/* Header */}
-      <div className="pt-safe shrink-0 px-4 pt-3">
-        <div className="flex items-center justify-between pb-3">
-          <div>
-            <p className="text-xs font-medium tracking-wide text-white/50 uppercase">Scanning</p>
-            <p className="text-2xl font-semibold tabular-nums">
-              {sessionCount}
-              <span className="ml-1.5 text-sm font-normal text-white/50">
-                {sessionCount === 1 ? 'book' : 'books'} this session
-              </span>
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setActive((v) => !v)}
-            className="rounded-full text-white hover:bg-white/10 hover:text-white"
-            aria-label={active ? 'Pause camera' : 'Resume camera'}
-          >
-            {active ? <XIcon className="size-5" /> : <CameraOffIcon className="size-5" />}
-          </Button>
-        </div>
-      </div>
-
-      {/* Camera */}
-      <div className="relative mx-4 flex-1 overflow-hidden rounded-2xl bg-black">
+      {/* Camera — everything else is sized around giving this the most room */}
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <video
           ref={videoRef}
           playsInline
@@ -162,15 +138,16 @@ export function ScanView({
 
         {/* Reticle */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-32 w-64 rounded-xl">
-            {(['left-0 top-0 border-l-2 border-t-2 rounded-tl-xl',
-               'right-0 top-0 border-r-2 border-t-2 rounded-tr-xl',
-               'left-0 bottom-0 border-l-2 border-b-2 rounded-bl-xl',
-               'right-0 bottom-0 border-r-2 border-b-2 rounded-br-xl'] as const).map((pos) => (
-              <span
-                key={pos}
-                className={cn('absolute size-7 border-ochre/90', pos)}
-              />
+          <div className="relative h-36 w-72">
+            {(
+              [
+                'left-0 top-0 border-l-2 border-t-2 rounded-tl-2xl',
+                'right-0 top-0 border-r-2 border-t-2 rounded-tr-2xl',
+                'left-0 bottom-0 border-l-2 border-b-2 rounded-bl-2xl',
+                'right-0 bottom-0 border-r-2 border-b-2 rounded-br-2xl',
+              ] as const
+            ).map((pos) => (
+              <span key={pos} className={cn('absolute size-8 border-ochre/90', pos)} />
             ))}
           </div>
         </div>
@@ -186,27 +163,12 @@ export function ScanView({
           <Overlay>
             <CameraOffIcon className="size-6 text-ochre" />
             <span className="max-w-64 text-center text-sm">{error}</span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => void restart()}>
-                Try again
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => onOpenSearch()}>
-                Search instead
-              </Button>
-            </div>
-          </Overlay>
-        )}
-
-        {!active && state === 'idle' && (
-          <Overlay>
-            <span>Camera paused</span>
-            <Button size="sm" variant="secondary" onClick={() => setActive(true)}>
-              Resume
+            <Button size="sm" variant="secondary" onClick={() => void restart()}>
+              Try again
             </Button>
           </Overlay>
         )}
 
-        {/* Transient result banner */}
         {latest && <ResultBanner entry={latest} onOpenSearch={onOpenSearch} />}
 
         {torchAvailable && (
@@ -214,12 +176,12 @@ export function ScanView({
             variant="secondary"
             size="icon"
             onClick={() => void toggleTorch()}
-            aria-label="Toggle torch"
+            aria-label={torchOn ? 'Turn off torch' : 'Turn on torch'}
             className={cn(
-              'absolute bottom-3 left-3 rounded-full border-0 backdrop-blur',
+              'absolute top-4 right-4 border-0 backdrop-blur',
               torchOn
                 ? 'bg-ochre text-ochre-foreground hover:bg-ochre/90'
-                : 'bg-black/50 text-white hover:bg-black/70',
+                : 'bg-black/45 text-white hover:bg-black/65',
             )}
           >
             <FlashlightIcon className="size-4" />
@@ -227,30 +189,24 @@ export function ScanView({
         )}
       </div>
 
-      {/* Recent adds */}
-      <div className="shrink-0 px-4 pt-3">
-        {entries.length === 0 ? (
-          <p className="py-2 text-center text-xs text-white/40">
-            Point at the barcode on the back of a book
-          </p>
-        ) : (
-          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-            {entries.slice(0, 14).map((entry) => (
-              <RecentChip key={entry.key} entry={entry} onOpenBook={onOpenBook} />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Recent adds — the "did that work?" signal during a fast sweep */}
+      {hasEntries && (
+        <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-4 py-2.5">
+          {entries.slice(0, 14).map((entry) => (
+            <RecentChip key={entry.key} entry={entry} onOpenBook={onOpenBook} />
+          ))}
+        </div>
+      )}
 
-      {/* Fallback */}
-      <div className="pb-safe shrink-0 px-4 pt-2 pb-3">
+      <div className="pb-safe shrink-0 px-4 pt-1 pb-3">
         <Button
-          variant="ghost"
+          size="lg"
+          variant="secondary"
           onClick={() => onOpenSearch()}
-          className="w-full justify-center gap-2 rounded-xl bg-white/8 text-sm text-white hover:bg-white/15 hover:text-white"
+          className="w-full gap-2 border-0 bg-white/12 text-white backdrop-blur hover:bg-white/20"
         >
           <SearchIcon className="size-4" />
-          No barcode? Search by title
+          Search manually instead
         </Button>
       </div>
     </div>
@@ -259,7 +215,7 @@ export function ScanView({
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/75 text-sm text-white backdrop-blur-sm">
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/75 px-6 text-sm text-white backdrop-blur-sm">
       {children}
     </div>
   )
@@ -285,7 +241,7 @@ function ResultBanner({
 
   const tone =
     entry.outcome === 'added'
-      ? 'bg-primary text-primary-foreground'
+      ? 'bg-linear-to-b from-primary-light to-primary text-primary-foreground'
       : entry.outcome === 'duplicate'
         ? 'bg-ochre text-ochre-foreground'
         : entry.outcome === 'looking'
@@ -295,7 +251,7 @@ function ResultBanner({
   return (
     <div
       className={cn(
-        'absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-xl px-3 py-2.5 shadow-lg',
+        'absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-2xl px-4 py-3 shadow-lg',
         tone,
       )}
     >
@@ -320,11 +276,7 @@ function ResultBanner({
       </div>
 
       {entry.outcome === 'missing' && (
-        <Button
-          size="sm"
-          className="h-7 shrink-0 px-2 text-xs"
-          onClick={() => onOpenSearch(entry.isbn13)}
-        >
+        <Button size="sm" className="shrink-0" onClick={() => onOpenSearch(entry.isbn13)}>
           Search
         </Button>
       )}
@@ -340,11 +292,11 @@ function RecentChip({
   onOpenBook: (book: Book) => void
 }) {
   if (entry.outcome === 'looking') {
-    return <div className="h-16 w-11 shrink-0 animate-pulse rounded-md bg-white/15" />
+    return <div className="h-14 w-10 shrink-0 animate-pulse rounded-lg bg-white/15" />
   }
   if (!entry.book) {
     return (
-      <div className="flex h-16 w-11 shrink-0 items-center justify-center rounded-md bg-white/10">
+      <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10">
         <XIcon className="size-4 text-white/40" />
       </div>
     )
@@ -353,8 +305,9 @@ function RecentChip({
     <button
       type="button"
       onClick={() => onOpenBook(entry.book!)}
+      aria-label={`Open ${entry.book.title || 'scanned book'}`}
       className={cn(
-        'relative h-16 w-11 shrink-0 overflow-hidden rounded-md ring-offset-1 ring-offset-[oklch(0.135_0.021_293)]',
+        'relative h-14 w-10 shrink-0 overflow-hidden rounded-lg ring-offset-1 ring-offset-[oklch(0.135_0.021_293)]',
         entry.outcome === 'missing' && 'ring-2 ring-ochre',
       )}
     >
