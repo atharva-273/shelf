@@ -20,7 +20,11 @@ import 'barcode-detector/polyfill'
 prepareZXingModule({
   overrides: {
     locateFile: (filename: string, prefix: string) =>
-      filename.endsWith('.wasm') ? `/${filename}` : prefix + filename,
+      // BASE_URL, not a bare "/" — on GitHub Pages the app is served from
+      // /<repo>/ and an absolute path would 404.
+      filename.endsWith('.wasm')
+        ? `${import.meta.env.BASE_URL}${filename}`
+        : prefix + filename,
   },
 })
 

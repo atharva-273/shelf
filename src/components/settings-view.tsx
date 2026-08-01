@@ -5,15 +5,19 @@ import {
   FileSpreadsheetIcon,
   Loader2Icon,
   MoonIcon,
+  ShareIcon,
   ShieldCheckIcon,
   SunIcon,
   UploadIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { db } from '@/lib/db'
 import { exportBackup, exportCsv, downloadBlob, importBackup } from '@/lib/book'
 import { onEnrichProgress } from '@/lib/enrich'
+import { buildPortfolio, sharePortfolio } from '@/lib/portfolio'
 import {
   formatBytes,
   getStorageStatus,
@@ -33,6 +37,12 @@ export function SettingsView({
   const [busy, setBusy] = useState<string | null>(null)
   const [enriching, setEnriching] = useState(0)
   const [storage, setStorage] = useState<StorageStatus>({ persisted: false, supported: false })
+  const [libraryName, setLibraryName] = useState(
+    () => localStorage.getItem('shelf-library-name') ?? 'My Library',
+  )
+  const [portfolioProgress, setPortfolioProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  )
   const fileRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => onEnrichProgress(setEnriching), [])
@@ -70,6 +80,30 @@ export function SettingsView({
       toast.error("Couldn't create the backup")
     } finally {
       setBusy(null)
+    }
+  }
+
+  async function handlePortfolio() {
+    setBusy('portfolio')
+    setPortfolioProgress({ done: 0, total: books.length })
+    try {
+      const name = libraryName.trim() || 'My Library'
+      localStorage.setItem('shelf-library-name', name)
+      const blob = await buildPortfolio({
+        title: name,
+        onProgress: (done, total) => setPortfolioProgress({ done, total }),
+      })
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      const result = await sharePortfolio(blob, `${slug || 'library'}.html`)
+      toast.success(result === 'shared' ? 'Portfolio shared' : 'Portfolio downloaded', {
+        description: `${books.length} books · ${formatBytes(blob.size)}`,
+      })
+    } catch (error) {
+      console.error(error)
+      toast.error("Couldn't build the portfolio")
+    } finally {
+      setBusy(null)
+      setPortfolioProgress(null)
     }
   }
 
@@ -126,6 +160,59 @@ export function SettingsView({
             </p>
           </div>
         )}
+
+        <Separator />
+
+        {/* Portfolio — the thing she actually shows people */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium">Share your library</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              A single web page of your shelf — covers, search, tap a book for details. Send it to
+              a friend or your book club; it works offline and needs nothing installed.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="library-name" className="text-xs text-muted-foreground">
+              Name it
+            </Label>
+            <Input
+              id="library-name"
+              value={libraryName}
+              onChange={(event) => setLibraryName(event.target.value)}
+              onBlur={() =>
+                localStorage.setItem('shelf-library-name', libraryName.trim() || 'My Library')
+              }
+              placeholder="My Library"
+              maxLength={60}
+            />
+          </div>
+
+          <Button
+            onClick={handlePortfolio}
+            disabled={busy !== null || books.length === 0}
+            size="lg"
+            className="w-full justify-start gap-2.5"
+          >
+            {busy === 'portfolio' ? (
+              <Loader2Icon className="size-4 animate-spin" />
+            ) : (
+              <ShareIcon className="size-4" />
+            )}
+            {busy === 'portfolio' ? 'Building…' : 'Create shareable portfolio'}
+            {portfolioProgress && portfolioProgress.total > 0 && (
+              <span className="ml-auto text-xs tabular-nums opacity-70">
+                {portfolioProgress.done}/{portfolioProgress.total}
+              </span>
+            )}
+          </Button>
+
+          <p className="px-1 text-xs text-muted-foreground">
+            Your private notes and shelf locations are left out — only what you'd want people to
+            see.
+          </p>
+        </section>
 
         <Separator />
 
