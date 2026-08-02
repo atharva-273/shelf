@@ -1,5 +1,5 @@
 import { db, updateBook } from './db'
-import { condenseDescription, fetchWorkDetails } from './lookup'
+import { condenseDescription, fetchEditionFacts, fetchWorkDetails } from './lookup'
 import { normalizeGenres } from './genres'
 import type { Book } from './types'
 
@@ -105,6 +105,53 @@ export async function runEnrichment(): Promise<void> {
 /** Kick the queue after a short idle delay so it never races a live lookup. */
 export function scheduleEnrichment(delayMs = 2500) {
   setTimeout(() => void runEnrichment(), delayMs)
+}
+
+/**
+ * Repair records written before we asked Open Library for editions.
+ *
+ * Those took `publisher`, `language` and `isbn` off work-level aggregates
+ * spanning every edition ever printed, so Harry Potter was published by
+ * Росмэн, To Kill a Mockingbird was in Korean, and the ISBN belonged to
+ * whichever printing happened to sort first.
+ *
+ * The delicate part is the title. It is hand-editable now, so overwriting it
+ * blindly would throw away her corrections. It is only replaced when the
+ * stored title still matches the work title the API returns — that is proof
+ * nobody has touched it since we wrote it. The moment she renames anything,
+ * this pass leaves it alone forever.
+ */
+export async function repairEditionFacts(): Promise<void> {
+  const books = await db.books.toArray()
+
+  for (const book of books) {
+    if (!book.workKey) continue
+    try {
+      const facts = await fetchEditionFacts(book.workKey)
+      if (!facts) continue
+
+      const patch: Partial<Book> = {}
+
+      if (facts.publisher && facts.publisher !== book.publisher) patch.publisher = facts.publisher
+      if (facts.language && facts.language !== book.language) patch.language = facts.language
+      if (facts.pageCount && !book.pageCount) patch.pageCount = facts.pageCount
+
+      // Untouched machine title, and the edition has a better one.
+      if (facts.title && facts.workTitle && book.title === facts.workTitle) {
+        if (facts.title !== book.title) patch.title = facts.title
+      }
+
+      // A searched book is catalogued by title, not by printing — the stored
+      // ISBN was a guess from a list of hundreds. Dropping it costs an ISBN
+      // search on these books and returns the record to only claiming what
+      // it actually knows.
+      if (book.isbn13 && book.source === 'openlibrary') patch.isbn13 = undefined
+
+      if (Object.keys(patch).length) await updateBook(book.id, patch)
+    } catch (error) {
+      console.warn('Edition repair failed', book.id, error)
+    }
+  }
 }
 
 /**

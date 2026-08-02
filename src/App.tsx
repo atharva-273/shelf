@@ -7,7 +7,7 @@ import { SettingsView } from '@/components/settings-view'
 import { SearchAddSheet } from '@/components/search-add'
 import { BookSheet } from '@/components/book-sheet'
 import { db } from '@/lib/db'
-import { reenrichAll, scheduleEnrichment } from '@/lib/enrich'
+import { reenrichAll, repairEditionFacts, scheduleEnrichment } from '@/lib/enrich'
 import type { Book } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -66,6 +66,17 @@ export default function App() {
     }
     // Otherwise just pick up anything left unfetched from a previous session.
     scheduleEnrichment(4000)
+  }, [])
+
+  useEffect(() => {
+    // One-shot repair of publisher/language/ISBN on books catalogued before
+    // we asked Open Library for editions rather than works. Runs after the
+    // enrichment kick so the two don't compete for the same 1/sec budget.
+    const EDITIONS_KEY = 'shelf-editions-v1'
+    if (localStorage.getItem(EDITIONS_KEY)) return
+    localStorage.setItem(EDITIONS_KEY, String(Date.now()))
+    const timer = setTimeout(() => void repairEditionFacts(), 9000)
+    return () => clearTimeout(timer)
   }, [])
 
   // Keep the open sheet in sync if the record changes underneath it.

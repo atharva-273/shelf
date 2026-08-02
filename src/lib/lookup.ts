@@ -176,19 +176,37 @@ export function openLibraryCoverUrl(isbn13: string, size: 'S' | 'M' | 'L' = 'M')
 // Open Library
 // ---------------------------------------------------------------------------
 
+/**
+ * A search hit is a *work*, not an edition. `publisher`, `language` and `isbn`
+ * on the doc are aggregates over every edition ever published — Harry Potter
+ * comes back with 196 publishers, 49 languages and 628 ISBNs, in no
+ * meaningful order. Reading `[0]` off those is how the shelf ended up
+ * attributing Harry Potter to Росмэн and filing Sapiens under Portuguese.
+ *
+ * The `editions` subquery answers the edition-shaped half of the question in
+ * the same request, so we read titles and publishers from there instead.
+ */
+interface OpenLibraryEditionDoc {
+  title?: string
+  subtitle?: string
+  publisher?: string[]
+  publish_date?: string[]
+  language?: string[]
+  isbn?: string[]
+  number_of_pages?: number
+}
+
 interface OpenLibrarySearchDoc {
   key?: string
   title?: string
   subtitle?: string
   author_name?: string[]
   first_publish_year?: number
-  publisher?: string[]
-  isbn?: string[]
   cover_i?: number
   number_of_pages_median?: number
   first_sentence?: string[]
   subject?: string[]
-  language?: string[]
+  editions?: { docs?: OpenLibraryEditionDoc[] }
 }
 
 const SEARCH_FIELDS = [
@@ -196,18 +214,34 @@ const SEARCH_FIELDS = [
   'title',
   'subtitle',
   'author_name',
+  // Legitimately work-level: the year the work first appeared, and the median
+  // extent across editions. Neither claims to describe a specific printing.
   'first_publish_year',
-  'publisher',
-  'isbn',
   'cover_i',
   'number_of_pages_median',
   'first_sentence',
   'subject',
-  'language',
+  // Everything edition-shaped comes from here. The API caps this at one
+  // edition per work and ignores `editions.limit`, so we can't ask for
+  // several and choose — the language preference has to go on the request.
+  'editions',
+  'editions.title',
+  'editions.subtitle',
+  'editions.publisher',
+  'editions.publish_date',
+  'editions.language',
+  'editions.isbn',
+  'editions.number_of_pages',
 ].join(',')
 
 function fromSearchDoc(doc: OpenLibrarySearchDoc, knownIsbn?: string): LookupResult | null {
-  if (!doc.title) return null
+  const edition = doc.editions?.docs?.[0]
+
+  // The work's own title is stored in the language the work was written in —
+  // "O Alquimista", "Преступление и наказание". The edition's title is the one
+  // printed on the copy in front of you, so it wins whenever we have it.
+  const title = edition?.title ?? doc.title
+  if (!title) return null
 
   // `first_sentence` is the book's opening line, not a blurb — only worth
   // showing when nothing better turns up, so it goes in as a placeholder that
@@ -215,13 +249,17 @@ function fromSearchDoc(doc: OpenLibrarySearchDoc, knownIsbn?: string): LookupRes
   const opener = doc.first_sentence?.[0]
 
   return {
-    isbn13: knownIsbn ?? doc.isbn?.find((value) => /^97[89]\d{10}$/.test(value)),
-    title: doc.title,
-    subtitle: doc.subtitle,
+    // Only ever the ISBN we were *given* — from a barcode or a typed-in
+    // number. A searched book is catalogued at the level of the title, not
+    // the printing, so there is no honest answer to "which ISBN"; picking one
+    // out of the edition's list would just be a confident guess.
+    isbn13: knownIsbn,
+    title,
+    subtitle: edition?.subtitle ?? doc.subtitle,
     authors: doc.author_name ?? [],
-    publisher: doc.publisher?.[0],
+    publisher: edition?.publisher?.[0],
     publishedYear: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
-    pageCount: doc.number_of_pages_median,
+    pageCount: edition?.number_of_pages ?? doc.number_of_pages_median,
     summary: opener && opener.length > 40 ? condenseDescription(opener) : undefined,
     // Keep a slice of the raw subjects for re-derivation, but the whole list
     // for the genre pass — the useful BISAC headings are often near the end.
@@ -230,7 +268,7 @@ function fromSearchDoc(doc: OpenLibrarySearchDoc, knownIsbn?: string): LookupRes
     coverId: doc.cover_i,
     coverRemote: doc.cover_i ? openLibraryCoverById(doc.cover_i, 'M') : undefined,
     workKey: doc.key,
-    language: doc.language?.[0],
+    language: edition?.language?.[0],
     source: 'openlibrary',
     status: 'partial',
   }
@@ -259,6 +297,46 @@ async function fetchOpenLibraryByIsbn(
   const data = (await response.json()) as { docs?: OpenLibrarySearchDoc[] }
   const doc = data.docs?.[0]
   return doc ? fromSearchDoc(doc, isbn13) : null
+}
+
+export interface EditionFacts {
+  /**
+   * The work's own title, in its original language. Not for display — it's
+   * how a repair pass tells an untouched machine-written title from one she
+   * has since corrected by hand.
+   */
+  workTitle?: string
+  title?: string
+  publisher?: string
+  language?: string
+  pageCount?: number
+}
+
+/**
+ * Edition-level facts for a book already in the library, looked up by the
+ * work key we stored when it was added. Exists to repair records written
+ * before we asked for editions, whose publisher and language were read off
+ * work-level aggregates and are mostly wrong.
+ */
+export async function fetchEditionFacts(
+  workKey: string,
+  signal?: AbortSignal,
+): Promise<EditionFacts | null> {
+  const key = workKey.startsWith('/') ? workKey : `/${workKey}`
+  let docs = await fetchOpenLibraryDocs(`key:"${key}"`, 1, 'eng', signal)
+  if (docs.length === 0) docs = await fetchOpenLibraryDocs(`key:"${key}"`, 1, undefined, signal)
+
+  const doc = docs[0]
+  if (!doc) return null
+  const edition = doc.editions?.docs?.[0]
+
+  return {
+    workTitle: doc.title,
+    title: edition?.title,
+    publisher: edition?.publisher?.[0],
+    language: edition?.language?.[0],
+    pageCount: edition?.number_of_pages,
+  }
 }
 
 export interface WorkDetails {
@@ -296,15 +374,21 @@ export async function fetchWorkDetails(
   return { description, subjects: work.subjects ?? [] }
 }
 
-async function searchOpenLibrary(
+async function fetchOpenLibraryDocs(
   query: string,
+  limit: number,
+  language: string | undefined,
   signal?: AbortSignal,
-): Promise<LookupResult[]> {
+): Promise<OpenLibrarySearchDoc[]> {
   const params = new URLSearchParams({
     q: query,
-    limit: '10',
+    limit: String(limit),
     fields: SEARCH_FIELDS,
   })
+  // Has to be its own parameter. Inside `q` as `language:eng` it is silently
+  // ignored, and the edition subquery comes back in whatever language it
+  // likes — that is how a search for Sapiens returned a Polish printing.
+  if (language) params.set('language', language)
 
   const response = await throttleOpenLibrary(() =>
     fetch(`${OPEN_LIBRARY_SEARCH}?${params}`, { signal }),
@@ -312,7 +396,28 @@ async function searchOpenLibrary(
   if (!response.ok) return []
 
   const data = (await response.json()) as { docs?: OpenLibrarySearchDoc[] }
-  return (data.docs ?? [])
+  return data.docs ?? []
+}
+
+/**
+ * English first, then anything.
+ *
+ * `language=eng` is what makes the edition subquery return an English
+ * printing, and with it the English title. But it filters *works*, not just
+ * editions — a book with no English edition disappears entirely. "Gunahon Ka
+ * Devta" goes from two hits to zero. So the unfiltered query runs as a
+ * fallback, which costs a second request only for books that have never been
+ * published in English, and those are exactly the books whose regional title
+ * is the correct answer anyway. She can rename any of them by hand.
+ */
+async function searchOpenLibrary(
+  query: string,
+  signal?: AbortSignal,
+): Promise<LookupResult[]> {
+  let docs = await fetchOpenLibraryDocs(query, 10, 'eng', signal)
+  if (docs.length === 0) docs = await fetchOpenLibraryDocs(query, 10, undefined, signal)
+
+  return docs
     .map((doc) => fromSearchDoc(doc))
     .filter((result): result is LookupResult => result !== null)
 }
