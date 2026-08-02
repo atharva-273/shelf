@@ -55,10 +55,10 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // The v2 migration derived genres from whatever six subjects v1 happened
-    // to persist, which is not enough to classify reliably. Re-run the
-    // enrichment pass once so those come from each work's full subject list.
-    const REGENRE_KEY = 'shelf-regenre-v2'
+    // Re-derive genres once per vocabulary change. Bumping this key is how an
+    // existing library picks up new genres and classification fixes — without
+    // it, books keep whatever they were tagged with when they were added.
+    const REGENRE_KEY = 'shelf-regenre-v3'
     if (!localStorage.getItem(REGENRE_KEY)) {
       localStorage.setItem(REGENRE_KEY, String(Date.now()))
       void reenrichAll()
