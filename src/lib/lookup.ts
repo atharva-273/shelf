@@ -1,5 +1,6 @@
 import type { LookupResult } from './types'
 import { normalizeIsbn } from './isbn'
+import { normalizeGenres } from './genres'
 
 /**
  * Metadata resolution.
@@ -222,7 +223,10 @@ function fromSearchDoc(doc: OpenLibrarySearchDoc, knownIsbn?: string): LookupRes
     publishedYear: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
     pageCount: doc.number_of_pages_median,
     summary: opener && opener.length > 40 ? condenseDescription(opener) : undefined,
-    subjects: doc.subject?.slice(0, 6),
+    // Keep a slice of the raw subjects for re-derivation, but the whole list
+    // for the genre pass — the useful BISAC headings are often near the end.
+    subjects: doc.subject?.slice(0, 12),
+    genres: normalizeGenres(doc.subject),
     coverId: doc.cover_i,
     coverRemote: doc.cover_i ? openLibraryCoverById(doc.cover_i, 'M') : undefined,
     workKey: doc.key,
@@ -257,15 +261,25 @@ async function fetchOpenLibraryByIsbn(
   return doc ? fromSearchDoc(doc, isbn13) : null
 }
 
+export interface WorkDetails {
+  description: string | null
+  /** The work's full subject list — richer than the edition search result. */
+  subjects: string[]
+}
+
 /**
  * Descriptions live on the work record, not the edition. This is the second
  * request we deliberately *don't* make during a sweep — it runs afterwards in
  * the background so scanning stays fast.
+ *
+ * It also returns the full subject list, which matters: the search endpoint's
+ * subjects arrive in no useful order, so a truncated slice of them produces
+ * bad genres. Re-deriving from the complete list here corrects that.
  */
-export async function fetchWorkDescription(
+export async function fetchWorkDetails(
   workKey: string,
   signal?: AbortSignal,
-): Promise<string | null> {
+): Promise<WorkDetails | null> {
   const key = workKey.startsWith('/') ? workKey : `/${workKey}`
   const response = await throttleOpenLibrary(() =>
     fetch(`https://openlibrary.org${key}.json`, { signal }),
@@ -274,10 +288,12 @@ export async function fetchWorkDescription(
 
   const work = (await response.json()) as {
     description?: string | { value?: string }
+    subjects?: string[]
   }
   const description =
-    typeof work.description === 'string' ? work.description : work.description?.value
-  return description ?? null
+    typeof work.description === 'string' ? work.description : (work.description?.value ?? null)
+
+  return { description, subjects: work.subjects ?? [] }
 }
 
 async function searchOpenLibrary(
@@ -352,6 +368,7 @@ function fromGoogleVolume(volume: GoogleVolume): LookupResult | null {
     descriptionRaw: info.description,
     summary: condenseDescription(info.description),
     subjects: info.categories,
+    genres: normalizeGenres(info.categories),
     coverRemote: cleanGoogleThumbnail(info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail),
     language: info.language,
     source: 'google',
@@ -401,6 +418,7 @@ function merge(primary: LookupResult, filler: Partial<LookupResult>): LookupResu
     'descriptionRaw',
     'summary',
     'subjects',
+    'genres',
     'coverRemote',
     'coverId',
     'workKey',

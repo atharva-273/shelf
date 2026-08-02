@@ -69,11 +69,44 @@ ipconfig getifaddr en0
 |---|---|
 | `lib/isbn.ts` | Check-digit validation, ISBN-10 → 13, ISSN/retail rejection |
 | `lib/lookup.ts` | Open Library primary, Google Books enhancement, throttle + breaker |
-| `lib/enrich.ts` | Background pass that fetches summaries after the sweep |
+| `lib/genres.ts` | Turns Open Library's subject noise into ~20 usable genres |
+| `lib/trending.ts` | Open Library trending feed (daily / weekly / monthly) |
+| `lib/enrich.ts` | Background pass: summaries + genre re-derivation |
 | `lib/db.ts` | Dexie/IndexedDB — books and cover photos |
 | `lib/book.ts` | Record shaping, image compression, backup export/import |
-| `hooks/use-scanner.ts` | Camera + barcode detection |
+| `lib/portfolio.ts` | Self-contained shareable HTML export |
 | `hooks/use-speech.ts` | Web Speech API voice input |
+| `hooks/use-scanner.ts` | Camera + barcode detection — **parked**, see below |
+
+### Genres
+
+Open Library returns 50–65 "subjects" per book, most of which can't be shown
+to a person:
+
+```
+"Fiction"                                 ← useful
+"FICTION / Literary"                      ← useful, and structured (BISAC)
+"nyt:trade_fiction_paperback=2008-01-05"  ← bestseller-list metadata
+"Weltgeschichte" / "Hombre" / "Historia"  ← same subject, four languages
+"Cb113.h4 h3713 2015"                     ← Library of Congress call number
+```
+
+`lib/genres.ts` discards the unreadable ones and maps the rest onto a fixed set
+of ~20 genres, capped at three per book. A genre must be **corroborated** —
+two independent subjects, or one structured BISAC heading. Without that rule a
+single stray keyword decides the classification: Harry Potter's first subjects
+are *Ghosts, Monsters, Vampires, Witches*, which on their own file it under
+Horror.
+
+Because subjects come back in no useful order, genres derived from a truncated
+list are unreliable. The background pass re-derives them from each work's full
+subject list, which is what actually gets Harry Potter to *Fantasy*.
+
+### The scanner is parked, not deleted
+
+`components/scan-view.tsx` and `hooks/use-scanner.ts` still build and are
+covered by typecheck; they're just not mounted as a tab. Re-adding the entry
+point in `App.tsx` brings the whole flow back.
 
 ### Metadata sources
 

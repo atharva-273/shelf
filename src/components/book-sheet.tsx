@@ -19,9 +19,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import { BookCover } from '@/components/book-cover'
 import { deleteBook, saveCover, updateBook } from '@/lib/db'
-import { compressImage, makeId, needsAttention } from '@/lib/book'
+import { compressImage, makeId } from '@/lib/book'
 import { formatIsbn } from '@/lib/isbn'
-import type { Book, ReadStatus } from '@/lib/types'
+import { FORMAT_LABELS, type Book, type BookFormat, type ReadStatus } from '@/lib/types'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const READ_STATES: { value: ReadStatus; label: string }[] = [
@@ -29,6 +30,8 @@ const READ_STATES: { value: ReadStatus; label: string }[] = [
   { value: 'reading', label: 'Reading' },
   { value: 'read', label: 'Read' },
 ]
+
+const FORMATS: BookFormat[] = ['physical', 'ebook', 'audiobook']
 
 export function BookSheet({
   book,
@@ -75,8 +78,6 @@ export function BookSheet({
     }
   }
 
-  const attention = needsAttention(draft)
-
   return (
     <Sheet open={Boolean(book)} onOpenChange={onOpenChange}>
       {/*
@@ -96,17 +97,6 @@ export function BookSheet({
         </SheetHeader>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-          {attention && (
-            <div className="rounded-2xl border border-ochre/40 bg-ochre-muted px-3.5 py-3">
-              <p className="text-sm font-medium text-ochre-foreground">Needs your input</p>
-              <p className="mt-0.5 text-xs text-ochre-foreground/80">
-                {draft.isbn13
-                  ? `Nothing came back for ${formatIsbn(draft.isbn13)}. Fill in what you can.`
-                  : 'Add a title and author so you can find this later.'}
-              </p>
-            </div>
-          )}
-
           {/* Cover + quick facts */}
           <div className="flex gap-4">
             <div className="relative shrink-0">
@@ -162,7 +152,7 @@ export function BookSheet({
                     key={state.value}
                     size="sm"
                     variant={draft.readStatus === state.value ? 'default' : 'outline'}
-                    className="h-7 flex-1 px-1 text-xs"
+                    className="h-8 flex-1 px-1 text-xs"
                     onClick={() => {
                       set('readStatus', state.value)
                       void persist({ readStatus: state.value })
@@ -174,6 +164,43 @@ export function BookSheet({
               </div>
             </div>
           </div>
+
+          <Field label="Format">
+            <div className="flex gap-1.5">
+              {FORMATS.map((format) => (
+                <Button
+                  key={format}
+                  size="sm"
+                  variant={(draft.format ?? 'physical') === format ? 'default' : 'outline'}
+                  className="h-9 flex-1 text-xs"
+                  onClick={() => {
+                    set('format', format)
+                    void persist({ format })
+                  }}
+                >
+                  {FORMAT_LABELS[format]}
+                </Button>
+              ))}
+            </div>
+          </Field>
+
+          {draft.genres && draft.genres.length > 0 && (
+            <Field label="Genre">
+              <div className="flex flex-wrap gap-1.5">
+                {draft.genres.map((genre) => (
+                  <span
+                    key={genre}
+                    className={cn(
+                      'rounded-full bg-secondary px-3 py-1 text-xs font-medium',
+                      'text-secondary-foreground',
+                    )}
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            </Field>
+          )}
 
           <Field label="Title">
             <Input

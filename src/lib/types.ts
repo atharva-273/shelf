@@ -6,6 +6,15 @@ export type ResolveStatus =
 
 export type ReadStatus = 'unread' | 'reading' | 'read'
 
+/** A shelf isn't only paper any more. */
+export type BookFormat = 'physical' | 'ebook' | 'audiobook'
+
+export const FORMAT_LABELS: Record<BookFormat, string> = {
+  physical: 'Physical',
+  ebook: 'Digital',
+  audiobook: 'Audiobook',
+}
+
 export type Source = 'google' | 'openlibrary' | 'mixed' | 'manual'
 
 export interface Book {
@@ -26,7 +35,10 @@ export interface Book {
   summary?: string
   /** Full description as retrieved, kept so we can re-condense later. */
   descriptionRaw?: string
+  /** Raw Open Library subjects — noisy, kept only as input to `genres`. */
   subjects?: string[]
+  /** Canonical genres derived from `subjects`; see lib/genres.ts. */
+  genres?: string[]
 
   /** Cover URL from an API (Google Books / Open Library). */
   coverRemote?: string
@@ -57,6 +69,7 @@ export interface Book {
 
   location?: string
   readStatus?: ReadStatus
+  format: BookFormat
   notes?: string
 
   addedAt: number
@@ -79,5 +92,6 @@ export type LookupResult = Omit<
   | 'coverLocalKey'
   | 'location'
   | 'readStatus'
+  | 'format'
   | 'notes'
 > & { id?: string }

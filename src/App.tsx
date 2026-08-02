@@ -1,22 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
-import { LibraryBigIcon, ScanLineIcon, SettingsIcon } from 'lucide-react'
+import { LibraryBigIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react'
 import { Toaster } from '@/components/ui/sonner'
-import { ScanView } from '@/components/scan-view'
+import { TrendingView } from '@/components/trending-view'
 import { LibraryView } from '@/components/library-view'
 import { SettingsView } from '@/components/settings-view'
 import { SearchAddSheet } from '@/components/search-add'
 import { BookSheet } from '@/components/book-sheet'
 import { db } from '@/lib/db'
-import { scheduleEnrichment } from '@/lib/enrich'
+import { reenrichAll, scheduleEnrichment } from '@/lib/enrich'
 import type { Book } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-type Tab = 'scan' | 'library' | 'settings'
+type Tab = 'library' | 'trending' | 'settings'
 type Theme = 'light' | 'dark'
 
+/**
+ * Library is first and default — it's the reason the app exists, and adding a
+ * book has its own entry point (the + in the header), so scanning doesn't need
+ * to be a destination. The scanner itself is parked, not deleted:
+ * `components/scan-view.tsx` still builds and can be re-mounted as a tab.
+ */
 const TABS = [
-  { id: 'scan' as const, label: 'Scan', icon: ScanLineIcon },
-  { id: 'library' as const, label: 'Library', icon: LibraryBigIcon },
+  { id: 'library' as const, label: 'My Library', icon: LibraryBigIcon },
+  { id: 'trending' as const, label: 'Trending', icon: TrendingUpIcon },
   { id: 'settings' as const, label: 'Settings', icon: SettingsIcon },
 ]
 
@@ -48,8 +54,17 @@ export default function App() {
     setSearchOpen(true)
   }, [])
 
-  // Pick up any summaries left unfetched from a previous session.
   useEffect(() => {
+    // The v2 migration derived genres from whatever six subjects v1 happened
+    // to persist, which is not enough to classify reliably. Re-run the
+    // enrichment pass once so those come from each work's full subject list.
+    const REGENRE_KEY = 'shelf-regenre-v2'
+    if (!localStorage.getItem(REGENRE_KEY)) {
+      localStorage.setItem(REGENRE_KEY, String(Date.now()))
+      void reenrichAll()
+      return
+    }
+    // Otherwise just pick up anything left unfetched from a previous session.
     scheduleEnrichment(4000)
   }, [])
 
@@ -62,33 +77,21 @@ export default function App() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
       <main className="min-h-0 flex-1">
-        {tab === 'scan' && (
-          <ScanView
-            onOpenSearch={openSearch}
-            onOpenBook={(book) => void refreshActiveBook(book.id)}
-          />
-        )}
         {tab === 'library' && (
           <LibraryView
             onOpenBook={(book) => void refreshActiveBook(book.id)}
             onOpenSearch={() => openSearch()}
-            onGoScan={() => setTab('scan')}
           />
+        )}
+        {tab === 'trending' && (
+          <TrendingView onOpenBook={(book) => void refreshActiveBook(book.id)} />
         )}
         {tab === 'settings' && <SettingsView theme={theme} onToggleTheme={toggleTheme} />}
       </main>
 
-      <nav
-        className={cn(
-          'pb-safe grid shrink-0 grid-cols-3 border-t',
-          tab === 'scan'
-            ? 'border-white/10 bg-[oklch(0.135_0.021_293)]'
-            : 'border-border bg-background',
-        )}
-      >
+      <nav className="pb-safe grid shrink-0 grid-cols-3 border-t border-border bg-background/90 backdrop-blur">
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = tab === id
-          const onDark = tab === 'scan'
           return (
             <button
               key={id}
@@ -96,13 +99,7 @@ export default function App() {
               onClick={() => setTab(id)}
               className={cn(
                 'flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors',
-                active
-                  ? onDark
-                    ? 'text-ochre'
-                    : 'text-primary'
-                  : onDark
-                    ? 'text-white/45'
-                    : 'text-muted-foreground',
+                active ? 'text-primary' : 'text-muted-foreground',
               )}
             >
               <Icon className="size-5" strokeWidth={active ? 2.4 : 1.9} />

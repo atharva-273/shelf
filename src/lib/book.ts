@@ -20,6 +20,7 @@ export function bookFromLookup(result: LookupResult, overrides: Partial<Book> = 
     summary: result.summary,
     descriptionRaw: result.descriptionRaw,
     subjects: result.subjects,
+    genres: result.genres,
     coverRemote: result.coverRemote,
     coverId: result.coverId,
     workKey: result.workKey,
@@ -28,13 +29,19 @@ export function bookFromLookup(result: LookupResult, overrides: Partial<Book> = 
     status: result.status,
     copies: 1,
     readStatus: 'unread',
+    format: 'physical',
     addedAt: now,
     updatedAt: now,
     ...overrides,
   }
 }
 
-/** A placeholder for an ISBN that resolved to nothing — she fixes it later. */
+/**
+ * Placeholder for an ISBN that resolved to nothing.
+ *
+ * Only reachable from the parked scanner (components/scan-view.tsx); the
+ * search flow always has a title before it writes anything.
+ */
 export function unresolvedBook(isbn13: string): Book {
   const now = Date.now()
   return {
@@ -46,6 +53,7 @@ export function unresolvedBook(isbn13: string): Book {
     status: 'unresolved',
     copies: 1,
     readStatus: 'unread',
+    format: 'physical',
     addedAt: now,
     updatedAt: now,
   }
@@ -55,10 +63,6 @@ export function authorLine(book: Pick<Book, 'authors'>): string {
   if (!book.authors.length) return 'Unknown author'
   if (book.authors.length <= 2) return book.authors.join(' & ')
   return `${book.authors[0]} + ${book.authors.length - 1} more`
-}
-
-export function needsAttention(book: Book): boolean {
-  return book.status === 'unresolved' || !book.title.trim() || book.authors.length === 0
 }
 
 // ---------------------------------------------------------------------------

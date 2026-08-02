@@ -11,7 +11,7 @@ import { addBook, bookExists, incrementCopies } from '@/lib/db'
 import { bookFromLookup, makeId } from '@/lib/book'
 import { scheduleEnrichment } from '@/lib/enrich'
 import { formatIsbn } from '@/lib/isbn'
-import type { Book, LookupResult } from '@/lib/types'
+import { FORMAT_LABELS, type Book, type BookFormat, type LookupResult } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -282,6 +282,7 @@ function ManualForm({
   const [title, setTitle] = useState(initialTitle)
   const [author, setAuthor] = useState('')
   const [summary, setSummary] = useState('')
+  const [format, setFormat] = useState<BookFormat>('physical')
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit(event: React.FormEvent) {
@@ -299,6 +300,7 @@ function ManualForm({
       status: 'manual',
       copies: 1,
       readStatus: 'unread',
+      format,
       addedAt: now,
       updatedAt: now,
     })
@@ -329,6 +331,24 @@ function ManualForm({
             placeholder="Separate multiple authors with commas"
             className="h-11 text-base"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Format</Label>
+          <div className="flex gap-1.5">
+            {(['physical', 'ebook', 'audiobook'] as BookFormat[]).map((option) => (
+              <Button
+                key={option}
+                type="button"
+                size="sm"
+                variant={format === option ? 'default' : 'outline'}
+                className="h-9 flex-1 text-xs"
+                onClick={() => setFormat(option)}
+              >
+                {FORMAT_LABELS[option]}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-1.5">

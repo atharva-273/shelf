@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import { normalizeGenres } from './genres'
 import type { Book, StoredCover } from './types'
 
 /**
@@ -14,11 +15,30 @@ class ShelfDatabase extends Dexie {
 
   constructor() {
     super('shelf')
+
     this.version(1).stores({
       // Indexed fields only; the rest of the record rides along unindexed.
       books: 'id, isbn13, title, addedAt, status, readStatus',
       covers: 'key',
     })
+
+    // v2 adds format + normalised genres. `*genres` is a multi-entry index so
+    // a book can be found under each of its genres.
+    this.version(2)
+      .stores({
+        books: 'id, isbn13, title, addedAt, status, readStatus, format, *genres',
+        covers: 'key',
+      })
+      .upgrade(async (tx) => {
+        // Anything catalogued before formats existed was a book off a shelf.
+        await tx
+          .table<Book>('books')
+          .toCollection()
+          .modify((book) => {
+            book.format ??= 'physical'
+            book.genres ??= normalizeGenres(book.subjects)
+          })
+      })
   }
 }
 
