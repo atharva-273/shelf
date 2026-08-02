@@ -263,26 +263,66 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   .empty{padding:60px 0;text-align:center;color:var(--muted)}
   footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 
-  /* Detail */
+  /* ---- Detail drawer -------------------------------------------------
+     A bottom sheet rather than a centred modal, matching the app. Built on
+     <dialog> so the backdrop, Esc-to-close and focus trap come for free;
+     only the positioning and transition are overridden.                  */
   dialog{
-    border:0;padding:0;border-radius:20px;max-width:520px;width:calc(100% - 32px);
-    background:#fff;color:inherit;box-shadow:0 24px 60px -18px rgba(23,19,31,.45);
+    border:0;padding:0;background:#fff;color:inherit;
+    /* margin-bottom:0 with auto elsewhere anchors it to the bottom edge
+       while staying horizontally centred on wide screens. */
+    margin:auto auto 0;
+    width:min(560px,100%);max-width:100%;
+    max-height:88dvh;
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -8px 60px -12px rgba(23,19,31,.4);
+    display:flex;flex-direction:column;overflow:hidden;
+
+    /* The resting state is *visible*. The slide-up lives entirely in
+       @starting-style, so a browser that doesn't support it — or one that
+       simply doesn't run the transition — shows the drawer in place instead
+       of leaving it parked off-screen. This file gets opened on whatever
+       browser a book club happens to have; an un-animated drawer is a
+       cosmetic loss, an invisible one is a broken page. */
+    translate:0 0;
+    transition:translate .3s cubic-bezier(.32,.72,0,1), overlay .3s allow-discrete, display .3s allow-discrete;
   }
-  dialog::backdrop{background:rgba(23,19,31,.55);backdrop-filter:blur(3px)}
-  .sheet{display:flex;gap:18px;padding:22px}
-  .sheet .cov{width:112px;flex:none;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:var(--tint)}
-  .sheet .cov img{width:100%;height:100%;object-fit:cover;display:block}
-  .sheet h2{margin:0 0 4px;font-size:19px;line-height:1.2;font-weight:700;letter-spacing:-.02em}
-  .sheet .by{color:var(--muted);font-size:14px;margin:0 0 12px;font-weight:500}
-  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-  .pill{background:var(--tint);color:#54407e;border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:600}
-  .pill.read{background:var(--primary);color:#fff}
-  .sheet p.sum{margin:0;font-size:13.5px;line-height:1.6;color:#3c3548}
+  @starting-style{ dialog[open]{translate:0 100%} }
+  dialog.dragging{transition:none}
+
+  dialog::backdrop{
+    background:rgba(23,19,31,.5);backdrop-filter:blur(3px);
+    opacity:1;transition:opacity .3s, overlay .3s allow-discrete, display .3s allow-discrete;
+  }
+  @starting-style{ dialog[open]::backdrop{opacity:0} }
+
+  .grab{flex:none;padding:10px 0 2px;display:flex;justify-content:center;cursor:grab;touch-action:none}
+  .grab::before{content:'';width:38px;height:4px;border-radius:999px;background:var(--line)}
+
+  .sheet-head{
+    flex:none;display:flex;align-items:center;gap:12px;
+    padding:6px 18px 12px;border-bottom:1px solid var(--line);
+  }
+  .sheet-head h2{
+    margin:0;font-size:15.5px;font-weight:600;letter-spacing:-.015em;flex:1;min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
   .close{
-    position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:999px;border:0;
+    flex:none;width:32px;height:32px;border-radius:999px;border:0;
     background:rgba(23,19,31,.06);cursor:pointer;font-size:18px;line-height:1;color:var(--muted)
   }
-  @media(max-width:520px){ .sheet{flex-direction:column} .sheet .cov{width:96px} }
+  .close:hover{background:rgba(23,19,31,.11)}
+
+  .sheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 18px 28px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+  .sheet-top{display:flex;gap:16px}
+  .sheet-top .cov{width:104px;flex:none;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:var(--tint)}
+  .sheet-top .cov img{width:100%;height:100%;object-fit:cover;display:block}
+  .sheet-top h3{margin:0 0 4px;font-size:18px;line-height:1.22;font-weight:700;letter-spacing:-.02em}
+  .sheet-top .by{color:var(--muted);font-size:13.5px;margin:0 0 10px;font-weight:500}
+  .pills{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{background:var(--tint);color:#54407e;border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:600}
+  .pill.read{background:var(--primary);color:#fff}
+  p.sum{margin:16px 0 0;font-size:13.5px;line-height:1.65;color:#3c3548}
 </style>
 </head>
 <body>
@@ -319,9 +359,13 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   </footer>
 </div>
 
-<dialog id="dlg">
-  <button class="close" id="x" aria-label="Close">&times;</button>
-  <div class="sheet" id="sheet"></div>
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="grab" id="grab" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h2 id="dlgTitle"></h2>
+    <button class="close" id="x" aria-label="Close">&times;</button>
+  </div>
+  <div class="sheet-body" id="sheet"></div>
 </dialog>
 
 <script>
@@ -330,6 +374,8 @@ const grid = document.getElementById('grid');
 const empty = document.getElementById('empty');
 const dlg = document.getElementById('dlg');
 const sheet = document.getElementById('sheet');
+const dlgTitle = document.getElementById('dlgTitle');
+const grab = document.getElementById('grab');
 let filter = 'all', term = '';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -368,22 +414,64 @@ function open(i) {
   if (b.r === 'read') bits.push('<span class="pill read">Read</span>');
   else if (b.r === 'reading') bits.push('<span class="pill read">Reading</span>');
 
+  dlgTitle.textContent = b.t;
   sheet.innerHTML =
-    '<div class="cov">' + (b.img ? '<img alt="" src="' + b.img + '">' : '<div class="fallback">' + esc(b.t) + '</div>') + '</div>'
-    + '<div><h2>' + esc(b.t) + '</h2>'
+    '<div class="sheet-top">'
+    + '<div class="cov">' + (b.img ? '<img alt="" src="' + b.img + '">' : '<div class="fallback">' + esc(b.t) + '</div>') + '</div>'
+    + '<div><h3>' + esc(b.t) + '</h3>'
     + '<p class="by">' + esc(b.a || 'Unknown author') + (b.pub ? ' &middot; ' + esc(b.pub) : '') + '</p>'
     + (bits.length ? '<div class="pills">' + bits.join('') + '</div>' : '')
-    + (b.s ? '<p class="sum">' + esc(b.s) + '</p>' : '')
-    + '</div>';
+    + '</div></div>'
+    + (b.s ? '<p class="sum">' + esc(b.s) + '</p>' : '');
+  sheet.scrollTop = 0;
   dlg.showModal();
+}
+
+function close() {
+  dlg.style.translate = '';
+  dlg.classList.remove('dragging');
+  dlg.close();
 }
 
 grid.addEventListener('click', (e) => {
   const card = e.target.closest('.card');
   if (card) open(Number(card.dataset.i));
 });
-document.getElementById('x').addEventListener('click', () => dlg.close());
-dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+document.getElementById('x').addEventListener('click', close);
+dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+// Reset any drag offset when Esc closes it, so the next open animates cleanly.
+dlg.addEventListener('close', () => { dlg.style.translate = ''; dlg.classList.remove('dragging'); });
+
+/* Swipe down to dismiss. The grab handle promises this works, so it has to.
+   Only starts from the handle or a body already scrolled to the top —
+   otherwise a downward swipe that should scroll the summary would close it. */
+let dragFrom = null;
+function dragStart(e) {
+  if (sheet.scrollTop > 0 && e.currentTarget !== grab) return;
+  dragFrom = e.touches[0].clientY;
+  dlg.classList.add('dragging');
+}
+function dragMove(e) {
+  if (dragFrom === null) return;
+  const dy = e.touches[0].clientY - dragFrom;
+  if (dy <= 0) { dlg.style.translate = '0 0'; return; }
+  e.preventDefault();
+  dlg.style.translate = '0 ' + dy + 'px';
+}
+function dragEnd() {
+  if (dragFrom === null) return;
+  const dy = parseFloat((dlg.style.translate || '0 0').split(' ')[1]) || 0;
+  dragFrom = null;
+  dlg.classList.remove('dragging');
+  if (dy > 90) close();
+  else dlg.style.translate = '';
+}
+for (const el of [grab, sheet]) {
+  el.addEventListener('touchstart', dragStart, { passive: true });
+  el.addEventListener('touchmove', dragMove, { passive: false });
+  el.addEventListener('touchend', dragEnd);
+  el.addEventListener('touchcancel', dragEnd);
+}
 document.getElementById('q').addEventListener('input', (e) => {
   term = e.target.value.trim().toLowerCase();
   render();
