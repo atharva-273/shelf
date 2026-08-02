@@ -108,16 +108,34 @@ export function BookCover({
         plain typographic jacket rather than an icon in an empty box — a book
         without artwork should still look like a book on the shelf.
       */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center">
-        <BookIcon className="size-3.5 shrink-0 text-primary/35" />
-        <span
-          className={cn(
-            'line-clamp-4 font-display leading-[1.2] text-foreground/60',
-            size === 'S' ? 'text-[10px]' : 'text-[13px]',
-          )}
-        >
-          {book.title || 'Untitled'}
-        </span>
+      {/*
+        Fades out once a real cover lands. It has to *fade* rather than be
+        swapped in a branch: tiles are transparent so the jacket can sit
+        uncropped on the page, and a permanently-layered placeholder would show
+        through the letterboxing on every book that does have artwork.
+      */}
+      <div
+        className={cn(
+          'absolute inset-0 flex items-center justify-center transition-opacity duration-200',
+          loaded && 'opacity-0',
+        )}
+      >
+        {/*
+          Sized to a jacket's own proportions rather than the tile's, so a book
+          with no artwork lines up with the books that have some instead of
+          reading as a grey block.
+        */}
+        <div className="flex aspect-2/3 h-full max-w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-media)] bg-surface-sunken p-3 text-center">
+          <BookIcon className="size-3.5 shrink-0 text-primary/35" />
+          <span
+            className={cn(
+              'line-clamp-4 leading-[1.2] font-medium tracking-[-0.5px] text-foreground/60',
+              size === 'S' ? 'text-[10px]' : 'text-[13px]',
+            )}
+          >
+            {book.title || 'Untitled'}
+          </span>
+        </div>
       </div>
 
       {src && (
@@ -136,7 +154,7 @@ export function BookCover({
           className={cn(
             'absolute inset-0 size-full transition-opacity duration-200',
             fit === 'contain'
-              ? 'object-contain drop-shadow-[0_3px_10px_rgba(23,19,31,0.2)]'
+              ? 'object-contain drop-shadow-[0_2px_8px_rgba(23,19,31,0.16)]'
               : 'bg-surface-sunken object-cover',
             loaded ? 'opacity-100' : 'opacity-0',
           )}

@@ -135,7 +135,7 @@ export function BookSheet({
           <div className="space-y-6 px-5 pt-5 pb-4">
             {/* Title block — display serif, then author, then the dry facts. */}
             <div>
-              <h2 className="font-display text-[26px] leading-[1.12] tracking-[-0.01em]">
+              <h2 className="text-[24px] leading-[1.2] font-medium tracking-[-1px]">
                 {draft.title || 'Untitled book'}
               </h2>
               <p className="mt-1.5 text-sm font-medium text-muted-foreground">

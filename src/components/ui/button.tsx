@@ -11,8 +11,9 @@ import { cn } from "@/lib/utils"
  * 2. Heights are raised for touch — the stock `h-8` default is a 32px target,
  *    well under the 44px minimum that's comfortable on a phone.
  *
- * The primary variant uses a light→dark violet gradient rather than a flat
- * fill, which is what stops large purple areas reading as a slab of colour.
+ * The primary variant is a flat violet fill. It was a gradient, but the rest
+ * of the UI is now flat greyscale-plus-one-accent, and a shaded button was the
+ * only thing left with depth painted into it.
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -20,9 +21,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-linear-to-b from-primary-light to-primary text-primary-foreground shadow-xs hover:brightness-108 active:brightness-95",
+          "bg-primary text-primary-foreground hover:brightness-110 active:brightness-95",
         outline:
-          "border-border bg-background/70 hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-input bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
