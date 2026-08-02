@@ -78,7 +78,7 @@ export function TrendingView({ onOpenBook }: { onOpenBook: (book: Book) => void 
       <div className="pt-safe shrink-0 border-b bg-background/80 px-4 pt-3 backdrop-blur">
         <div className="flex items-baseline justify-between pb-3">
           <div>
-            <h1 className="font-display text-[30px] leading-none tracking-[-0.01em]">Trending</h1>
+            <h1 className="text-[30px] leading-none font-semibold tracking-[-0.03em]">Trending</h1>
             <p className="mt-1.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
               What people are reading now
             </p>
@@ -199,7 +199,7 @@ function TrendingRow({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-[var(--radius-card)] bg-surface p-2.5 ring-1 ring-black/[0.06] dark:ring-white/[0.07]">
-      <span className="w-4 shrink-0 text-right font-display text-[15px] text-muted-foreground/60 tabular-nums">
+      <span className="w-4 shrink-0 text-right text-[15px] font-semibold text-muted-foreground/60 tabular-nums">
         {rank}
       </span>
 
@@ -224,7 +224,7 @@ function TrendingRow({
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 font-display text-[16px] leading-[1.15] text-foreground">
+        <p className="line-clamp-2 text-[16px] leading-[1.2] font-semibold tracking-[-0.02em] text-foreground">
           {result.title}
         </p>
         <p className="mt-0.5 line-clamp-1 text-[12.5px] font-medium text-muted-foreground">

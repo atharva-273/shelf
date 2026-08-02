@@ -140,7 +140,7 @@ export function SettingsView({
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       <div className="pt-safe shrink-0 px-4 pt-3">
-        <h1 className="pb-4 font-display text-[30px] leading-none tracking-[-0.01em]">Settings</h1>
+        <h1 className="pb-4 text-[30px] leading-none font-semibold tracking-[-0.03em]">Settings</h1>
       </div>
 
       <div className="space-y-7 px-4 pb-8">
@@ -376,7 +376,7 @@ export function SettingsView({
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="px-2 text-center">
-      <p className="font-display text-[26px] leading-none tabular-nums">{value}</p>
+      <p className="text-[26px] leading-none font-semibold tracking-[-0.03em] tabular-nums">{value}</p>
       <p className="mt-1.5 text-[10.5px] font-medium tracking-[0.07em] text-muted-foreground uppercase">
         {label}
       </p>

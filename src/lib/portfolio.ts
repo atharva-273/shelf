@@ -191,7 +191,7 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
 <title>${escapeHtml(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Instrument+Serif&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#fff; --fg:#17131f; --muted:#6c6579; --line:#e8e4ef;
@@ -200,7 +200,9 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
        matching the app so the exported page reads as the same product. */
     --sunken:#f1eef8;
     --radius:14px; --radius-card:6px; --radius-media:4px;
-    --display:'Instrument Serif', ui-serif, Georgia, serif;
+    /* One typeface, matching the app. Display text separates by weight and
+       tighter tracking rather than by a second family. */
+    --display:'Manrope', ui-sans-serif, system-ui, sans-serif;
   }
   *{box-sizing:border-box}
   html{ -webkit-text-size-adjust:100% }
@@ -220,7 +222,7 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   }
   .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 64px}
   header{margin-bottom:28px}
-  h1{font-family:var(--display);font-size:clamp(34px,7vw,54px);line-height:1.02;margin:0 0 12px;font-weight:400;letter-spacing:-.015em}
+  h1{font-family:var(--display);font-size:clamp(30px,6.2vw,46px);line-height:1.08;margin:0 0 12px;font-weight:700;letter-spacing:-.035em}
   .stats{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px;font-weight:500}
   .stats b{color:var(--fg);font-weight:600}
   .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 24px;align-items:center}
@@ -274,7 +276,7 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   .fallback{
     width:100%;height:100%;display:flex;align-items:center;justify-content:center;
     padding:10px;text-align:center;
-    font-family:var(--display);font-size:14px;color:rgba(23,19,31,.55);line-height:1.2;
+    font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:-.02em;color:rgba(23,19,31,.55);line-height:1.2;
   }
   .badge{
     position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:999px;
@@ -282,7 +284,7 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   }
   .badge svg{width:12px;height:12px;stroke:#fff;stroke-width:3}
   .meta{flex:1;padding:10px 12px 12px;border-top:1px solid rgba(23,19,31,.05)}
-  .meta .t{font-family:var(--display);font-size:15px;line-height:1.18;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .meta .t{font-family:var(--display);font-size:15px;font-weight:600;letter-spacing:-.02em;line-height:1.22;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .meta .a{font-size:11.5px;font-weight:500;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .empty{padding:60px 0;text-align:center;color:var(--muted)}
   footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -345,7 +347,7 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
     filter:drop-shadow(0 4px 14px rgba(23,19,31,.24))}
   .hero .fallback{font-size:16px;min-height:150px}
   .sheet-info{padding:18px 18px 6px}
-  .sheet-info h3{margin:0 0 5px;font-family:var(--display);font-size:23px;line-height:1.14;font-weight:400;letter-spacing:-.01em}
+  .sheet-info h3{margin:0 0 5px;font-family:var(--display);font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-.03em}
   .sheet-info .by{color:var(--muted);font-size:13.5px;margin:0 0 12px;font-weight:500}
   .pills{display:flex;flex-wrap:wrap;gap:6px}
   .pill{background:var(--tint);color:#54407e;border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:600}

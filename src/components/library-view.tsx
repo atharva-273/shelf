@@ -119,7 +119,7 @@ export function LibraryView({
       <div className="pt-safe shrink-0 border-b bg-background/80 px-4 pt-3 backdrop-blur">
         <div className="flex items-baseline justify-between pb-3">
           <div>
-            <h1 className="font-display text-[30px] leading-none tracking-[-0.01em]">My Library</h1>
+            <h1 className="text-[30px] leading-none font-semibold tracking-[-0.03em]">My Library</h1>
             <p className="mt-1.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
               {books.length} {books.length === 1 ? 'title' : 'titles'}
               {totalCopies !== books.length && ` · ${totalCopies} copies`}
@@ -176,7 +176,7 @@ export function LibraryView({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search your shelf"
-              className="pl-11"
+              className="pl-11 text-sm"
               autoComplete="off"
             />
           </div>
@@ -272,7 +272,7 @@ function EmptyLibrary({ onAdd }: { onAdd: () => void }) {
         <BookPlusIcon className="size-8 text-primary" strokeWidth={1.6} />
       </div>
       <div className="max-w-xs space-y-2.5">
-        <h2 className="font-display text-[26px] leading-tight">Your shelf is empty</h2>
+        <h2 className="text-[26px] leading-tight font-semibold tracking-[-0.03em]">Your shelf is empty</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Nothing catalogued yet. Add your first book and start building the library you'll
           actually want to show people.
@@ -360,7 +360,7 @@ function GridCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
         anyway, so the slack lands harmlessly at the bottom of the card instead.
       */}
       <div className="flex-1 border-t border-black/[0.05] px-3 py-2.5 dark:border-white/[0.06]">
-        <p className="line-clamp-2 font-display text-[15px] leading-[1.18] tracking-[-0.005em] text-foreground">
+        <p className="line-clamp-2 text-[15px] leading-[1.22] font-semibold tracking-[-0.02em] text-foreground">
           {book.title || 'Untitled'}
         </p>
         <p className="mt-1 line-clamp-1 text-[11.5px] leading-tight font-medium tracking-[0.005em] text-muted-foreground">
@@ -386,7 +386,7 @@ function ListRow({ book, onOpen }: { book: Book; onOpen: () => void }) {
         className="h-[68px] w-[52px] shrink-0 rounded-[var(--radius-media)] p-1.5"
       />
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 font-display text-[16px] leading-tight text-foreground">
+        <p className="line-clamp-1 text-[16px] leading-tight font-semibold tracking-[-0.02em] text-foreground">
           {book.title || 'Untitled'}
         </p>
         <p className="mt-0.5 line-clamp-1 text-[12.5px] font-medium text-muted-foreground">

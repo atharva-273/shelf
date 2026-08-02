@@ -112,7 +112,7 @@ export function BookCover({
         <BookIcon className="size-3.5 shrink-0 text-primary/35" />
         <span
           className={cn(
-            'line-clamp-4 font-display leading-[1.2] text-foreground/60',
+            'line-clamp-4 leading-[1.2] font-semibold tracking-[-0.02em] text-foreground/60',
             size === 'S' ? 'text-[10px]' : 'text-[13px]',
           )}
         >
