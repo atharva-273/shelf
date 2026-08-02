@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BookIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getCover } from '@/lib/db'
@@ -39,6 +39,7 @@ export function BookCover({
    */
   fit?: 'cover' | 'contain'
 }) {
+  const imgRef = useRef<HTMLImageElement | null>(null)
   const [localUrl, setLocalUrl] = useState<string | null>(null)
   const [stage, setStage] = useState<Stage>(() => firstStage(book, false))
   const [loaded, setLoaded] = useState(false)
@@ -69,7 +70,13 @@ export function BookCover({
   // Restart the chain if the underlying book changes.
   useEffect(() => {
     setStage(firstStage(book, Boolean(book.coverLocalKey && localUrl)))
-    setLoaded(false)
+    // Not a plain `setLoaded(false)`. This effect runs *after* the commit that
+    // mounted the <img>, so on a cached image the ref callback below has
+    // already reported it loaded — blanking the flag here would strand the
+    // cover at opacity 0 forever, since `onLoad` has fired and won't fire
+    // again. Re-reading the element is the only source of truth at this point.
+    const image = imgRef.current
+    setLoaded(Boolean(image?.complete && image.naturalWidth > 2))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book.id, book.coverRemote, book.coverId, book.isbn13])
 
@@ -146,6 +153,7 @@ export function BookCover({
           loading="lazy"
           decoding="async"
           ref={(node) => {
+            imgRef.current = node
             // An image already in the HTTP cache finishes loading before React
             // attaches onLoad, so without this every tab switch re-runs the
             // fade and the placeholder flashes through a cover we already have.
