@@ -119,13 +119,35 @@ export function LibraryView({
       <div className="pt-safe shrink-0 border-b bg-background/80 px-4 pt-3 backdrop-blur">
         <div className="flex items-baseline justify-between pb-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">My Library</h1>
-            <p className="text-xs text-muted-foreground">
+            <h1 className="font-display text-[30px] leading-none tracking-[-0.01em]">My Library</h1>
+            <p className="mt-1.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
               {books.length} {books.length === 1 ? 'title' : 'titles'}
               {totalCopies !== books.length && ` · ${totalCopies} copies`}
             </p>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
+            {/* Sort lives up here rather than beside the chips: at 375px the
+                two together left the chip row 220px for 272px of chips, and
+                "Unread" fell off the edge. */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label={`Sort: ${SORTS.find((s) => s.value === sort)?.label}`}>
+                  <ArrowUpDownIcon className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {SORTS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => setSort(option.value)}
+                    className={cn(sort === option.value && 'font-semibold text-primary')}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button
               variant="ghost"
               size="icon"
@@ -176,35 +198,17 @@ export function LibraryView({
           </Button>
         </div>
 
-        {/* Status chips + sort */}
-        <div className="flex items-center gap-2 pb-3">
-          <div className="no-scrollbar -mx-1 flex flex-1 gap-1.5 overflow-x-auto px-1">
-            {STATUS_CHIPS.map((chip) => (
-              <Chip
-                key={chip.value}
-                active={status === chip.value}
-                onClick={() => setStatus(chip.value)}
-              >
-                {chip.label}
-              </Chip>
-            ))}
-          </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 px-2 text-xs">
-                <ArrowUpDownIcon className="size-3.5" />
-                {SORTS.find((s) => s.value === sort)?.label}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {SORTS.map((option) => (
-                <DropdownMenuItem key={option.value} onClick={() => setSort(option.value)}>
-                  {option.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Status chips get the whole row now. */}
+        <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-3">
+          {STATUS_CHIPS.map((chip) => (
+            <Chip
+              key={chip.value}
+              active={status === chip.value}
+              onClick={() => setStatus(chip.value)}
+            >
+              {chip.label}
+            </Chip>
+          ))}
         </div>
       </div>
 
@@ -228,13 +232,15 @@ export function LibraryView({
             )}
           </div>
         ) : layout === 'grid' ? (
-          <div className="grid grid-cols-3 items-start gap-x-3 gap-y-4 sm:grid-cols-4 md:grid-cols-6">
+          // Two columns, not three: the cover is the content here, and at
+          // three-up on a phone it's a thumbnail rather than a jacket.
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visible.map((book) => (
               <GridCard key={book.id} book={book} onOpen={() => onOpenBook(book)} />
             ))}
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="space-y-2">
             {visible.map((book) => (
               <ListRow key={book.id} book={book} onOpen={() => onOpenBook(book)} />
             ))}
@@ -265,8 +271,8 @@ function EmptyLibrary({ onAdd }: { onAdd: () => void }) {
       <div className="flex size-20 items-center justify-center rounded-3xl bg-linear-to-b from-primary-light/15 to-primary/15">
         <BookPlusIcon className="size-8 text-primary" strokeWidth={1.6} />
       </div>
-      <div className="max-w-xs space-y-2">
-        <h2 className="text-xl font-semibold tracking-tight">Your shelf is empty</h2>
+      <div className="max-w-xs space-y-2.5">
+        <h2 className="font-display text-[26px] leading-tight">Your shelf is empty</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Nothing catalogued yet. Add your first book and start building the library you'll
           actually want to show people.
@@ -313,33 +319,50 @@ function FormatMark({ book, className }: { book: Book; className?: string }) {
   return null
 }
 
+/**
+ * The card is one object: a sunken panel holding the jacket, with the caption
+ * bedded into the same white surface underneath. Previously the cover and the
+ * text were separate things floating on the page, which is what made the
+ * spacing between them read as an accident.
+ */
 function GridCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-label={`${book.title || 'Untitled'} by ${authorLine(book)}`}
-      className="group text-left"
+      className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] bg-surface text-left ring-1 ring-black/[0.06] transition-all active:scale-[0.985] dark:ring-white/[0.07]"
     >
-      <div className="relative aspect-2/3 overflow-hidden rounded-lg shadow-sm transition-transform group-active:scale-[0.97]">
-        <BookCover book={book} className="size-full" />
+      <div className="relative aspect-4/5 w-full overflow-hidden">
+        <BookCover book={book} fit="contain" className="size-full p-3.5" size="L" />
+
         {book.format !== 'physical' && (
-          <span className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur">
-            <FormatMark book={book} className="size-3" />
+          <span className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-surface/85 text-foreground/70 shadow-sm backdrop-blur">
+            <FormatMark book={book} className="size-3.5" />
           </span>
         )}
         {book.copies > 1 && (
-          <span className="absolute bottom-1.5 left-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white tabular-nums">
+          <span className="absolute bottom-2 left-2 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-semibold text-background tabular-nums">
             ×{book.copies}
           </span>
         )}
       </div>
-      <p className="mt-2 line-clamp-2 min-h-[2.25rem] text-xs leading-[1.35] font-medium">
-        {book.title || 'Untitled'}
-      </p>
-      <p className="line-clamp-1 text-[11px] leading-tight text-muted-foreground">
-        {authorLine(book)}
-      </p>
+
+      {/*
+        Hairline rather than a gap — the caption belongs to the cover.
+        No min-height on the title: reserving two lines put ~19px of dead air
+        between a one-line title and its author, which is exactly the gap that
+        made the old layout feel unresolved. Grid rows stretch to equal height
+        anyway, so the slack lands harmlessly at the bottom of the card instead.
+      */}
+      <div className="flex-1 border-t border-black/[0.05] px-3 py-2.5 dark:border-white/[0.06]">
+        <p className="line-clamp-2 font-display text-[15px] leading-[1.18] tracking-[-0.005em] text-foreground">
+          {book.title || 'Untitled'}
+        </p>
+        <p className="mt-1 line-clamp-1 text-[11.5px] leading-tight font-medium tracking-[0.005em] text-muted-foreground">
+          {authorLine(book)}
+        </p>
+      </div>
     </button>
   )
 }
@@ -350,24 +373,29 @@ function ListRow({ book, onOpen }: { book: Book; onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       aria-label={`${book.title || 'Untitled'} by ${authorLine(book)}`}
-      className="flex w-full items-start gap-3 py-3 text-left"
+      className="flex w-full items-center gap-3.5 rounded-[var(--radius-card)] bg-surface p-2.5 text-left ring-1 ring-black/[0.06] transition-transform active:scale-[0.99] dark:ring-white/[0.07]"
     >
-      <BookCover book={book} size="S" className="h-16 w-11 shrink-0 rounded-md" />
+      <BookCover
+        book={book}
+        size="M"
+        fit="contain"
+        className="h-[68px] w-[52px] shrink-0 rounded-[var(--radius-media)] p-1.5"
+      />
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 text-sm font-medium">{book.title || 'Untitled'}</p>
-        <p className="line-clamp-1 text-sm text-muted-foreground">{authorLine(book)}</p>
+        <p className="line-clamp-1 font-display text-[16px] leading-tight text-foreground">
+          {book.title || 'Untitled'}
+        </p>
+        <p className="mt-0.5 line-clamp-1 text-[12.5px] font-medium text-muted-foreground">
+          {authorLine(book)}
+        </p>
         {book.genres?.length ? (
-          <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground/80">
+          <p className="mt-1 line-clamp-1 text-[11px] tracking-wide text-muted-foreground/70 uppercase">
             {book.genres.join(' · ')}
           </p>
-        ) : (
-          book.summary && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground/80">{book.summary}</p>
-          )
-        )}
+        ) : null}
       </div>
       {book.format !== 'physical' && (
-        <FormatMark book={book} className="mt-1 size-4 shrink-0 text-muted-foreground" />
+        <FormatMark book={book} className="size-4 shrink-0 text-muted-foreground" />
       )}
     </button>
   )

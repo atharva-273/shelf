@@ -2,12 +2,28 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/manrope";
+@import "@fontsource/instrument-serif";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    /* Editorial display face for page titles and book titles; Manrope carries
+       every piece of UI text. The pairing is what gives the shelf a
+       bookshop feel rather than a dashboard one. */
+    --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
     --font-heading: var(--font-sans);
     --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+
+    /* Card surfaces sit *above* the tinted page background. Keeping them as
+       separate tokens is what lets the page read as a surface with things
+       placed on it, instead of one flat sheet. */
+    --color-surface: var(--surface);
+    --color-surface-sunken: var(--surface-sunken);
+
+    /* Crisp corners on anything showing a cover. Soft pills for controls,
+       sharp rectangles for artwork — the contrast is the point. */
+    --radius-media: 4px;
+    --radius-card: 6px;
 
     /* Shelf: custom accent tokens (kept separate from shadcn's --accent,
        which drives subtle menu/hover states and must stay neutral). */
@@ -107,6 +123,12 @@
     --wash-b: oklch(0.966 0.021 86);
     --grain-opacity: 0.038;
 
+    /* The page is faintly tinted; cards are white and lift off it. Sunken is
+       the panel a cover sits on — a shade *below* the page, so artwork reads
+       as placed into a recess rather than floating. */
+    --surface: oklch(1 0 0);
+    --surface-sunken: oklch(0.958 0.012 292);
+
     --radius: 0.875rem;
 
     --sidebar: oklch(0.985 0.006 292);
@@ -164,6 +186,10 @@
     --wash-a: oklch(0.225 0.062 296);
     --wash-b: oklch(0.185 0.035 300);
     --grain-opacity: 0.022;
+
+    /* Inverted: cards lift by getting *lighter* than the page. */
+    --surface: oklch(0.195 0.03 293);
+    --surface-sunken: oklch(0.235 0.038 293);
 
     --sidebar: oklch(0.183 0.028 293);
     --sidebar-foreground: oklch(0.968 0.006 292);

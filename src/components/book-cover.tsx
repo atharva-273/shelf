@@ -26,10 +26,18 @@ export function BookCover({
   book,
   className,
   size = 'M',
+  fit = 'cover',
 }: {
   book: Book
   className?: string
   size?: 'S' | 'M' | 'L'
+  /**
+   * `contain` presents the jacket whole on a sunken panel — the way a product
+   * shot sits on a tinted backdrop — instead of cropping it to the tile. Book
+   * jackets vary a lot in proportion, and cropping eats the typography that
+   * makes a cover recognisable.
+   */
+  fit?: 'cover' | 'contain'
 }) {
   const [localUrl, setLocalUrl] = useState<string | null>(null)
   const [stage, setStage] = useState<Stage>(() => firstStage(book, false))
@@ -94,11 +102,20 @@ export function BookCover({
           : null
 
   return (
-    <div className={cn('relative overflow-hidden bg-secondary', className)}>
-      {/* Always present; the image covers it once it actually arrives. */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 p-2 text-center">
-        <BookIcon className="size-4 shrink-0 text-primary/40" />
-        <span className="line-clamp-3 text-[10px] leading-tight font-medium text-secondary-foreground/70">
+    <div className={cn('relative overflow-hidden bg-surface-sunken', className)}>
+      {/*
+        Always present; the image covers it once it actually arrives. Set as a
+        plain typographic jacket rather than an icon in an empty box — a book
+        without artwork should still look like a book on the shelf.
+      */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center">
+        <BookIcon className="size-3.5 shrink-0 text-primary/35" />
+        <span
+          className={cn(
+            'line-clamp-4 font-display leading-[1.2] text-foreground/60',
+            size === 'S' ? 'text-[10px]' : 'text-[13px]',
+          )}
+        >
           {book.title || 'Untitled'}
         </span>
       </div>
@@ -117,7 +134,10 @@ export function BookCover({
             if (node?.complete && node.naturalWidth > 2) setLoaded(true)
           }}
           className={cn(
-            'absolute inset-0 size-full bg-secondary object-cover transition-opacity duration-200',
+            'absolute inset-0 size-full transition-opacity duration-200',
+            fit === 'contain'
+              ? 'object-contain drop-shadow-[0_3px_10px_rgba(23,19,31,0.2)]'
+              : 'bg-surface-sunken object-cover',
             loaded ? 'opacity-100' : 'opacity-0',
           )}
           onError={advance}

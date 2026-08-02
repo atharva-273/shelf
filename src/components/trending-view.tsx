@@ -78,8 +78,10 @@ export function TrendingView({ onOpenBook }: { onOpenBook: (book: Book) => void 
       <div className="pt-safe shrink-0 border-b bg-background/80 px-4 pt-3 backdrop-blur">
         <div className="flex items-baseline justify-between pb-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Trending</h1>
-            <p className="text-xs text-muted-foreground">What people are reading right now</p>
+            <h1 className="font-display text-[30px] leading-none tracking-[-0.01em]">Trending</h1>
+            <p className="mt-1.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
+              What people are reading now
+            </p>
           </div>
           <Button
             variant="ghost"
@@ -143,7 +145,7 @@ export function TrendingView({ onOpenBook }: { onOpenBook: (book: Book) => void 
           </p>
         )}
 
-        <div className="divide-y">
+        <div className="space-y-2">
           {results.map((result, index) => {
             const key = ownedKey(result.title, result.authors[0])
             const isOwned = owned.has(key)
@@ -196,15 +198,15 @@ function TrendingRow({
   onOpen: () => void
 }) {
   return (
-    <div className="flex items-start gap-3 py-3">
-      <span className="w-4 shrink-0 pt-6 text-right text-xs font-semibold text-muted-foreground/70 tabular-nums">
+    <div className="flex items-center gap-3 rounded-[var(--radius-card)] bg-surface p-2.5 ring-1 ring-black/[0.06] dark:ring-white/[0.07]">
+      <span className="w-4 shrink-0 text-right font-display text-[15px] text-muted-foreground/60 tabular-nums">
         {rank}
       </span>
 
       <button
         type="button"
         onClick={owned ? onOpen : onAdd}
-        className="h-[74px] w-[50px] shrink-0 overflow-hidden rounded-md bg-secondary"
+        className="flex h-[68px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-media)] bg-surface-sunken p-1.5"
         aria-label={owned ? `Open ${result.title}` : `Add ${result.title}`}
       >
         {result.coverRemote ? (
@@ -212,23 +214,27 @@ function TrendingRow({
             src={result.coverRemote}
             alt=""
             loading="lazy"
-            className="size-full object-cover"
+            className="size-full object-contain drop-shadow-[0_2px_6px_rgba(23,19,31,0.18)]"
           />
         ) : (
-          <span className="flex size-full items-center justify-center p-1 text-center text-[9px] leading-tight font-medium text-secondary-foreground/70">
+          <span className="line-clamp-3 text-center text-[9px] leading-tight font-medium text-foreground/55">
             {result.title}
           </span>
         )}
       </button>
 
-      <div className="min-w-0 flex-1 py-0.5">
-        <p className="line-clamp-2 text-sm leading-snug font-medium">{result.title}</p>
-        <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 font-display text-[16px] leading-[1.15] text-foreground">
+          {result.title}
+        </p>
+        <p className="mt-0.5 line-clamp-1 text-[12.5px] font-medium text-muted-foreground">
           {result.authors.length ? result.authors.join(', ') : 'Unknown author'}
         </p>
-        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/80">
-          {[result.publishedYear, result.genres?.[0]].filter(Boolean).join(' · ')}
-        </p>
+        {(result.publishedYear || result.genres?.[0]) && (
+          <p className="mt-1 line-clamp-1 text-[11px] tracking-wide text-muted-foreground/70 uppercase">
+            {[result.publishedYear, result.genres?.[0]].filter(Boolean).join(' · ')}
+          </p>
+        )}
       </div>
 
       <Button
@@ -237,7 +243,7 @@ function TrendingRow({
         onClick={owned ? onOpen : onAdd}
         disabled={busy}
         aria-label={owned ? 'Already in your library' : `Add ${result.title} to your library`}
-        className="mt-5 shrink-0"
+        className="shrink-0"
       >
         {busy ? (
           <Loader2Icon className="size-4 animate-spin" />

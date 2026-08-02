@@ -191,12 +191,16 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
 <title>${escapeHtml(title)}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Instrument+Serif&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#fff; --fg:#17131f; --muted:#6c6579; --line:#e8e4ef;
     --primary:#5b21b6; --primary-light:#7c46e0; --tint:#f4f0fb; --ochre:#c8901a;
-    --radius:14px;
+    /* Sunken panel a jacket sits on, and crisp corners for artwork —
+       matching the app so the exported page reads as the same product. */
+    --sunken:#f1eef8;
+    --radius:14px; --radius-card:6px; --radius-media:4px;
+    --display:'Instrument Serif', ui-serif, Georgia, serif;
   }
   *{box-sizing:border-box}
   html{ -webkit-text-size-adjust:100% }
@@ -216,7 +220,7 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   }
   .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 64px}
   header{margin-bottom:28px}
-  h1{font-size:clamp(28px,6vw,44px);line-height:1.05;margin:0 0 10px;font-weight:700;letter-spacing:-.03em}
+  h1{font-family:var(--display);font-size:clamp(34px,7vw,54px);line-height:1.02;margin:0 0 12px;font-weight:400;letter-spacing:-.015em}
   .stats{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:14px;font-weight:500}
   .stats b{color:var(--fg);font-weight:600}
   .toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 24px;align-items:center}
@@ -238,28 +242,48 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
     background:linear-gradient(180deg,var(--primary-light),var(--primary));
     border-color:transparent;color:#fff;
   }
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:22px 16px}
-  @media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
-  .card{border:0;background:none;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
-  .thumb{
-    position:relative;aspect-ratio:2/3;border-radius:var(--radius);overflow:hidden;background:var(--tint);
-    box-shadow:0 1px 2px rgba(23,19,31,.07),0 6px 16px -8px rgba(23,19,31,.16);
+  /* Two-up on a phone so the jacket is a jacket, not a thumbnail. */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(min-width:560px){.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}}
+
+  /* The card is one object: sunken panel holding the jacket, caption bedded
+     into the same white surface below a hairline. */
+  .card{
+    display:flex;flex-direction:column;border:0;padding:0;text-align:left;cursor:pointer;
+    font:inherit;color:inherit;background:#fff;border-radius:var(--radius-card);overflow:hidden;
+    box-shadow:0 0 0 1px rgba(23,19,31,.06);
     transition:transform .18s ease, box-shadow .18s ease;
   }
-  .card:hover .thumb{transform:translateY(-3px);box-shadow:0 2px 4px rgba(23,19,31,.08),0 14px 26px -10px rgba(23,19,31,.22)}
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .card:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(23,19,31,.08),0 12px 24px -12px rgba(23,19,31,.25)}
+  /* Deliberately not a centred grid: place-items:center stops the item
+     stretching, so height:100% on the image resolves against its own
+     intrinsic size and tall jackets spill past the padding. A plain block with
+     padding gives the image a real box to be contained inside.
+     (No backticks in comments here — this whole stylesheet lives inside a JS
+     template literal, and a backtick would end the string.) */
+  .thumb{
+    position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--sunken);padding:14px;
+  }
+  /* contain, not cover: cropping a jacket eats the typography that makes it
+     recognisable, and book proportions vary far more than product shots.
+     width/height 100% + object-fit rather than max-*: as a centred grid item
+     the intrinsic size wins over max-height, and tall jackets spill past the
+     panel's padding. */
+  .thumb img{width:100%;height:100%;object-fit:contain;display:block;
+    filter:drop-shadow(0 3px 10px rgba(23,19,31,.2))}
   .fallback{
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    padding:12px;text-align:center;font-size:11px;font-weight:600;color:#6a4fa8;line-height:1.3;
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    padding:10px;text-align:center;
+    font-family:var(--display);font-size:14px;color:rgba(23,19,31,.55);line-height:1.2;
   }
   .badge{
-    position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:999px;
+    position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:999px;
     background:var(--primary);color:#fff;display:grid;place-items:center;
   }
   .badge svg{width:12px;height:12px;stroke:#fff;stroke-width:3}
-  .meta{margin-top:9px}
-  .meta .t{font-size:12.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.3em}
-  .meta .a{font-size:11.5px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .meta{flex:1;padding:10px 12px 12px;border-top:1px solid rgba(23,19,31,.05)}
+  .meta .t{font-family:var(--display);font-size:15px;line-height:1.18;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .meta .a{font-size:11.5px;font-weight:500;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .empty{padding:60px 0;text-align:center;color:var(--muted)}
   footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 
@@ -313,12 +337,16 @@ function buildHtml(title: string, entries: PortfolioEntry[]): string {
   }
   .close:hover{background:rgba(23,19,31,.11)}
 
-  .sheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 18px 28px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-  .sheet-top{display:flex;gap:16px}
-  .sheet-top .cov{width:104px;flex:none;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:var(--tint)}
-  .sheet-top .cov img{width:100%;height:100%;object-fit:cover;display:block}
-  .sheet-top h3{margin:0 0 4px;font-size:18px;line-height:1.22;font-weight:700;letter-spacing:-.02em}
-  .sheet-top .by{color:var(--muted);font-size:13.5px;margin:0 0 10px;font-weight:500}
+  .sheet-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+  /* Same product-page hero as the app: jacket centred on a sunken panel,
+     everything factual underneath. */
+  .hero{background:var(--sunken);display:grid;place-items:center;padding:26px 24px 22px}
+  .hero img{height:190px;width:100%;max-width:170px;object-fit:contain;display:block;
+    filter:drop-shadow(0 4px 14px rgba(23,19,31,.24))}
+  .hero .fallback{font-size:16px;min-height:150px}
+  .sheet-info{padding:18px 18px 6px}
+  .sheet-info h3{margin:0 0 5px;font-family:var(--display);font-size:23px;line-height:1.14;font-weight:400;letter-spacing:-.01em}
+  .sheet-info .by{color:var(--muted);font-size:13.5px;margin:0 0 12px;font-weight:500}
   .pills{display:flex;flex-wrap:wrap;gap:6px}
   .pill{background:var(--tint);color:#54407e;border-radius:999px;padding:4px 11px;font-size:11.5px;font-weight:600}
   .pill.read{background:var(--primary);color:#fff}
@@ -416,13 +444,15 @@ function open(i) {
 
   dlgTitle.textContent = b.t;
   sheet.innerHTML =
-    '<div class="sheet-top">'
-    + '<div class="cov">' + (b.img ? '<img alt="" src="' + b.img + '">' : '<div class="fallback">' + esc(b.t) + '</div>') + '</div>'
-    + '<div><h3>' + esc(b.t) + '</h3>'
+    '<div class="hero">'
+    + (b.img ? '<img alt="" src="' + b.img + '">' : '<div class="fallback">' + esc(b.t) + '</div>')
+    + '</div>'
+    + '<div class="sheet-info">'
+    + '<h3>' + esc(b.t) + '</h3>'
     + '<p class="by">' + esc(b.a || 'Unknown author') + (b.pub ? ' &middot; ' + esc(b.pub) : '') + '</p>'
     + (bits.length ? '<div class="pills">' + bits.join('') + '</div>' : '')
-    + '</div></div>'
-    + (b.s ? '<p class="sum">' + esc(b.s) + '</p>' : '');
+    + (b.s ? '<p class="sum">' + esc(b.s) + '</p>' : '')
+    + '</div>';
   sheet.scrollTop = 0;
   dlg.showModal();
 }

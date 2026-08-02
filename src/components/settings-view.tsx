@@ -140,12 +140,13 @@ export function SettingsView({
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       <div className="pt-safe shrink-0 px-4 pt-3">
-        <h1 className="pb-4 text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="pb-4 font-display text-[30px] leading-none tracking-[-0.01em]">Settings</h1>
       </div>
 
-      <div className="space-y-6 px-4 pb-8">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2">
+      <div className="space-y-7 px-4 pb-8">
+        {/* Stats — one card, three columns, hairline dividers. Three separate
+            tiles read as three unrelated facts; this reads as a summary. */}
+        <div className="grid grid-cols-3 divide-x divide-black/[0.06] rounded-[var(--radius-card)] bg-surface py-4 ring-1 ring-black/[0.06] dark:divide-white/[0.07] dark:ring-white/[0.07]">
           <Stat label="Titles" value={books.length} />
           <Stat label="Copies" value={books.reduce((s, b) => s + b.copies, 0)} />
           <Stat label="Pages" value={totalPages.toLocaleString()} />
@@ -166,7 +167,7 @@ export function SettingsView({
         {/* Portfolio — the thing she actually shows people */}
         <section className="space-y-3">
           <div>
-            <h2 className="text-sm font-medium">Share your library</h2>
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">Share your library</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               A single web page of your shelf — covers, search, tap a book for details. Send it to
               a friend or your book club; it works offline and needs nothing installed.
@@ -218,7 +219,7 @@ export function SettingsView({
 
         {/* Storage durability — what actually keeps the library safe */}
         <section className="space-y-3">
-          <h2 className="text-sm font-medium">Keeping your library safe</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">Keeping your library safe</h2>
 
           <div
             className={cn(
@@ -345,7 +346,7 @@ export function SettingsView({
         <Separator />
 
         <section className="space-y-3">
-          <h2 className="text-sm font-medium">Appearance</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">Appearance</h2>
           <Button
             variant="outline"
             onClick={onToggleTheme}
@@ -361,7 +362,7 @@ export function SettingsView({
         <Separator />
 
         <section className="space-y-2">
-          <h2 className="text-sm font-medium">About</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/80">About</h2>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Book data comes from Google Books and Open Library, both free. Nothing is sent anywhere
             else — your library never leaves this device.
@@ -374,9 +375,11 @@ export function SettingsView({
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl bg-secondary px-3 py-3.5 text-center">
-      <p className="text-xl font-semibold tabular-nums">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+    <div className="px-2 text-center">
+      <p className="font-display text-[26px] leading-none tabular-nums">{value}</p>
+      <p className="mt-1.5 text-[10.5px] font-medium tracking-[0.07em] text-muted-foreground uppercase">
+        {label}
+      </p>
     </div>
   )
 }

@@ -22,7 +22,6 @@ import { deleteBook, saveCover, updateBook } from '@/lib/db'
 import { compressImage, makeId } from '@/lib/book'
 import { formatIsbn } from '@/lib/isbn'
 import { FORMAT_LABELS, type Book, type BookFormat, type ReadStatus } from '@/lib/types'
-import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const READ_STATES: { value: ReadStatus; label: string }[] = [
@@ -90,69 +89,99 @@ export function BookSheet({
         side="bottom"
         className="flex max-h-[92dvh] flex-col gap-0 rounded-t-2xl p-0"
       >
-        <SheetHeader className="shrink-0 border-b px-4 pt-4 pb-3">
-          <SheetTitle className="truncate text-base">
-            {draft.title || 'Untitled book'}
-          </SheetTitle>
+        {/* Screen-reader title only — the visible one lives in the hero below,
+            where it can be set at display size instead of squeezed into a bar. */}
+        <SheetHeader className="sr-only">
+          <SheetTitle>{draft.title || 'Untitled book'}</SheetTitle>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-          {/* Cover + quick facts */}
-          <div className="flex gap-4">
-            <div className="relative shrink-0">
-              <BookCover book={draft} size="L" className="h-40 w-28 rounded-lg shadow-sm" />
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleCoverFile}
-                className="hidden"
-              />
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() => fileRef.current?.click()}
-                disabled={savingCover}
-                aria-label="Photograph the cover"
-                className="absolute -right-2 -bottom-2 size-8 rounded-full shadow-md"
-              >
-                {savingCover ? (
-                  <Loader2Icon className="size-3.5 animate-spin" />
-                ) : (
-                  <CameraIcon className="size-3.5" />
-                )}
-              </Button>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {/*
+            Product-page hero: the jacket presented whole and centred on a
+            sunken panel, the way a shop shows the object before it tells you
+            about it. Everything factual follows underneath.
+          */}
+          <div className="relative flex justify-center bg-surface-sunken px-6 pt-9 pb-7">
+            <BookCover
+              book={draft}
+              size="L"
+              fit="contain"
+              className="h-52 w-full max-w-[168px] bg-transparent"
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleCoverFile}
+              className="hidden"
+            />
+            <Button
+              size="icon-sm"
+              variant="secondary"
+              onClick={() => fileRef.current?.click()}
+              disabled={savingCover}
+              aria-label="Photograph the cover"
+              className="absolute right-4 bottom-4 shadow-sm"
+            >
+              {savingCover ? (
+                <Loader2Icon className="size-3.5 animate-spin" />
+              ) : (
+                <CameraIcon className="size-3.5" />
+              )}
+            </Button>
+          </div>
+
+          <div className="space-y-6 px-5 pt-5 pb-4">
+            {/* Title block — display serif, then author, then the dry facts. */}
+            <div>
+              <h2 className="font-display text-[26px] leading-[1.12] tracking-[-0.01em]">
+                {draft.title || 'Untitled book'}
+              </h2>
+              <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+                {draft.authors.length ? draft.authors.join(', ') : 'Unknown author'}
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium tracking-[0.04em] text-muted-foreground/80 uppercase">
+                {[
+                  draft.publishedYear,
+                  draft.pageCount ? `${draft.pageCount} pages` : null,
+                  draft.publisher,
+                ]
+                  .filter(Boolean)
+                  .map((fact, index) => (
+                    <span key={fact as string} className="flex items-center gap-2">
+                      {index > 0 && <span className="text-muted-foreground/40">·</span>}
+                      {fact}
+                    </span>
+                  ))}
+              </div>
+
+              {(draft.genres?.length || draft.copies > 1) && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {draft.genres?.map((genre) => (
+                    <Badge key={genre} variant="secondary" className="rounded-full font-medium">
+                      {genre}
+                    </Badge>
+                  ))}
+                  {draft.copies > 1 && (
+                    <Badge className="rounded-full bg-ochre text-ochre-foreground hover:bg-ochre">
+                      {draft.copies} copies
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="flex flex-wrap gap-1.5">
-                {draft.pageCount ? <Badge variant="secondary">{draft.pageCount} pages</Badge> : null}
-                {draft.publishedYear ? (
-                  <Badge variant="secondary">{draft.publishedYear}</Badge>
-                ) : null}
-                {draft.copies > 1 ? (
-                  <Badge className="bg-ochre text-ochre-foreground hover:bg-ochre">
-                    {draft.copies} copies
-                  </Badge>
-                ) : null}
-              </div>
-              {draft.publisher && (
-                <p className="text-xs text-muted-foreground">{draft.publisher}</p>
-              )}
-              {draft.isbn13 && (
-                <p className="font-mono text-xs text-muted-foreground/80">
-                  {formatIsbn(draft.isbn13)}
-                </p>
-              )}
-
-              <div className="flex gap-1 pt-1">
+            <div>
+              <SectionLabel>Reading</SectionLabel>
+              <div className="flex gap-1.5">
                 {READ_STATES.map((state) => (
                   <Button
                     key={state.value}
                     size="sm"
                     variant={draft.readStatus === state.value ? 'default' : 'outline'}
-                    className="h-8 flex-1 px-1 text-xs"
+                    className="h-9 flex-1 text-xs"
                     onClick={() => {
                       set('readStatus', state.value)
                       void persist({ readStatus: state.value })
@@ -163,113 +192,117 @@ export function BookSheet({
                 ))}
               </div>
             </div>
-          </div>
 
-          <Field label="Format">
-            <div className="flex gap-1.5">
-              {FORMATS.map((format) => (
-                <Button
-                  key={format}
-                  size="sm"
-                  variant={(draft.format ?? 'physical') === format ? 'default' : 'outline'}
-                  className="h-9 flex-1 text-xs"
-                  onClick={() => {
-                    set('format', format)
-                    void persist({ format })
-                  }}
-                >
-                  {FORMAT_LABELS[format]}
-                </Button>
-              ))}
-            </div>
-          </Field>
-
-          {draft.genres && draft.genres.length > 0 && (
-            <Field label="Genre">
-              <div className="flex flex-wrap gap-1.5">
-                {draft.genres.map((genre) => (
-                  <span
-                    key={genre}
-                    className={cn(
-                      'rounded-full bg-secondary px-3 py-1 text-xs font-medium',
-                      'text-secondary-foreground',
-                    )}
+            <div>
+              <SectionLabel>Format</SectionLabel>
+              <div className="flex gap-1.5">
+                {FORMATS.map((format) => (
+                  <Button
+                    key={format}
+                    size="sm"
+                    variant={(draft.format ?? 'physical') === format ? 'default' : 'outline'}
+                    className="h-9 flex-1 text-xs"
+                    onClick={() => {
+                      set('format', format)
+                      void persist({ format })
+                    }}
                   >
-                    {genre}
-                  </span>
+                    {FORMAT_LABELS[format]}
+                  </Button>
                 ))}
               </div>
-            </Field>
-          )}
+            </div>
 
-          <Field label="Title">
-            <Input
-              value={draft.title}
-              onChange={(event) => set('title', event.target.value)}
-              onBlur={() => void persist({ title: draft.title })}
-              placeholder="Title"
-              className="h-11 text-base"
-            />
-          </Field>
+            {draft.summary && (
+              <div>
+                <SectionLabel>About</SectionLabel>
+                <p className="text-[13.5px] leading-[1.65] text-foreground/80">{draft.summary}</p>
+              </div>
+            )}
 
-          <Field label="Author">
-            <Input
-              value={draft.authors.join(', ')}
-              onChange={(event) =>
-                set(
-                  'authors',
-                  event.target.value.split(',').map((a) => a.trim()).filter(Boolean),
-                )
-              }
-              onBlur={() => void persist({ authors: draft.authors })}
-              placeholder="Author"
-              className="h-11 text-base"
-            />
-          </Field>
+            {draft.isbn13 && (
+              <p className="font-mono text-[11px] tracking-wide text-muted-foreground/70">
+                ISBN {formatIsbn(draft.isbn13)}
+              </p>
+            )}
 
-          <Field label="Summary">
-            <Textarea
-              value={draft.summary ?? ''}
-              onChange={(event) => set('summary', event.target.value)}
-              onBlur={() => void persist({ summary: draft.summary })}
-              placeholder="A line or two about it"
-              rows={3}
-              className="resize-none text-base"
-            />
-          </Field>
+            {/* Everything editable lives below the read-only presentation, so
+                the sheet opens as a book rather than as a form. */}
+            <div className="space-y-4 rounded-[var(--radius-card)] bg-surface-sunken/60 p-4">
+              <SectionLabel>Edit details</SectionLabel>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Shelf / location">
-              <Input
-                value={draft.location ?? ''}
-                onChange={(event) => set('location', event.target.value)}
-                onBlur={() => void persist({ location: draft.location })}
-                placeholder="e.g. Living room"
-                className="h-11 text-base"
-              />
-            </Field>
-            <Field label="Copies">
-              <Input
-                type="number"
-                min={1}
-                value={draft.copies}
-                onChange={(event) => set('copies', Math.max(1, Number(event.target.value) || 1))}
-                onBlur={() => void persist({ copies: draft.copies })}
-                className="h-11 text-base"
-              />
-            </Field>
+              <Field label="Title">
+                <Input
+                  value={draft.title}
+                  onChange={(event) => set('title', event.target.value)}
+                  onBlur={() => void persist({ title: draft.title })}
+                  placeholder="Title"
+                  className="bg-surface text-base"
+                />
+              </Field>
+
+              <Field label="Author">
+                <Input
+                  value={draft.authors.join(', ')}
+                  onChange={(event) =>
+                    set(
+                      'authors',
+                      event.target.value.split(',').map((a) => a.trim()).filter(Boolean),
+                    )
+                  }
+                  onBlur={() => void persist({ authors: draft.authors })}
+                  placeholder="Author"
+                  className="bg-surface text-base"
+                />
+              </Field>
+
+              <Field label="Summary">
+                <Textarea
+                  value={draft.summary ?? ''}
+                  onChange={(event) => set('summary', event.target.value)}
+                  onBlur={() => void persist({ summary: draft.summary })}
+                  placeholder="A line or two about it"
+                  rows={3}
+                  className="resize-none bg-surface text-base"
+                />
+              </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Shelf">
+                  <Input
+                    value={draft.location ?? ''}
+                    onChange={(event) => set('location', event.target.value)}
+                    onBlur={() => void persist({ location: draft.location })}
+                    placeholder="Living room"
+                    className="bg-surface text-base"
+                  />
+                </Field>
+                <Field label="Copies">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={draft.copies}
+                    onChange={(event) =>
+                      set('copies', Math.max(1, Number(event.target.value) || 1))
+                    }
+                    onBlur={() => void persist({ copies: draft.copies })}
+                    className="bg-surface text-base"
+                  />
+                </Field>
+              </div>
+
+              <Field label="Notes">
+                <Textarea
+                  value={draft.notes ?? ''}
+                  onChange={(event) => set('notes', event.target.value)}
+                  onBlur={() => void persist({ notes: draft.notes })}
+                  placeholder="Lent to someone, signed copy, anything"
+                  rows={2}
+                  className="resize-none bg-surface text-base"
+                />
+              </Field>
+            </div>
           </div>
-
-          <Field label="Notes">
-            <Textarea
-              value={draft.notes ?? ''}
-              onChange={(event) => set('notes', event.target.value)}
-              onBlur={() => void persist({ notes: draft.notes })}
-              placeholder="Lent to someone, signed copy, anything"
-              rows={2}
-              className="resize-none text-base"
-            />
-          </Field>
         </div>
 
         <div className="pb-safe flex shrink-0 items-center justify-between gap-2 border-t px-4 py-3">
@@ -311,10 +344,19 @@ export function BookSheet({
   )
 }
 
+/** Small caps label — the quiet tier that separates sections without a rule. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-2.5 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground/80 uppercase">
+      {children}
+    </p>
+  )
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
       {children}
     </div>
   )
