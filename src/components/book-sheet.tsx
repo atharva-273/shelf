@@ -50,11 +50,11 @@ export function BookSheet({
   if (!draft) return null
 
   /**
-   * Title, author and summary are the catalogue's answer, not hers — editing
-   * them on a book she looked up would just let a typo overwrite Open
-   * Library. On a book typed in by hand there is no catalogue answer, so those
-   * three become fields; `status: 'unresolved'` is included because a book
-   * that resolved to nothing has the same problem as one never looked up.
+   * Title and author are the catalogue's answer, not hers — editing them on a
+   * book she looked up would just let a typo overwrite Open Library. On a book
+   * typed in by hand there is no catalogue answer, so they become fields;
+   * `status: 'unresolved'` is included because a book that resolved to nothing
+   * has the same problem as one never looked up.
    */
   const editableIdentity = draft.source === 'manual' || draft.status === 'unresolved'
 
@@ -214,28 +214,24 @@ export function BookSheet({
               )}
             </div>
 
-            {/* About sits above the controls: what the book *is* before what
-                she has done with it. */}
-            {editableIdentity ? (
-              <div>
-                <SectionLabel>About</SectionLabel>
-                <Textarea
-                  value={draft.summary ?? ''}
-                  onChange={(event) => set('summary', event.target.value)}
-                  onBlur={() => void persist({ summary: draft.summary })}
-                  placeholder="A line or two about it"
-                  rows={3}
-                  className="resize-none text-base"
-                />
-              </div>
-            ) : (
-              draft.summary && (
-                <div>
-                  <SectionLabel>About</SectionLabel>
-                  <p className="text-[13.5px] leading-[1.65] text-foreground/80">{draft.summary}</p>
-                </div>
-              )
-            )}
+            {/*
+              About stays here, above the controls — what the book *is* before
+              what she has done with it — but it is a field on every book, not
+              just hand-added ones. Unlike title and author, the catalogue
+              blurb is frequently wrong-length or wrong-tone for a shelf she
+              means to show people, so it is hers to rewrite.
+            */}
+            <div>
+              <SectionLabel>About</SectionLabel>
+              <Textarea
+                value={draft.summary ?? ''}
+                onChange={(event) => set('summary', event.target.value)}
+                onBlur={() => void persist({ summary: draft.summary })}
+                placeholder="A line or two about it"
+                rows={3}
+                className="resize-none text-base"
+              />
+            </div>
 
             <div>
               <SectionLabel>Reading</SectionLabel>

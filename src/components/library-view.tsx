@@ -79,9 +79,14 @@ export function LibraryView({
         if (!filters.genres.some((g) => genres.includes(g))) return false
       }
       if (!term) return true
+      // Notes are searchable on purpose: "lent to Priya", "signed", "first
+      // edition" are the things you actually go looking for, and they exist
+      // nowhere else in the record. Everything here is a field she can see on
+      // the book's own page, so a match is always explainable.
       return (
         book.title.toLowerCase().includes(term) ||
         book.authors.some((a) => a.toLowerCase().includes(term)) ||
+        book.notes?.toLowerCase().includes(term) ||
         book.isbn13?.includes(term) ||
         book.location?.toLowerCase().includes(term)
       )
