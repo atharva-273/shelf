@@ -49,6 +49,15 @@ export function BookSheet({
 
   if (!draft) return null
 
+  /**
+   * Title, author and summary are the catalogue's answer, not hers — editing
+   * them on a book she looked up would just let a typo overwrite Open
+   * Library. On a book typed in by hand there is no catalogue answer, so those
+   * three become fields; `status: 'unresolved'` is included because a book
+   * that resolved to nothing has the same problem as one never looked up.
+   */
+  const editableIdentity = draft.source === 'manual' || draft.status === 'unresolved'
+
   const set = <K extends keyof Book>(key: K, value: Book[K]) =>
     setDraft((current) => (current ? { ...current, [key]: value } : current))
 
@@ -133,57 +142,103 @@ export function BookSheet({
           </div>
 
           {/*
-            One flat form — no read-only presentation tier above an "edit"
-            panel. Everything you can see, you can change, and nothing is
-            printed twice. The polished read-only treatment is what the
-            portfolio export is for; this sheet is the working view.
+            Catalogue facts read; only what she owns about the book is a form.
+            Title, author and summary come from Open Library and are presented
+            rather than edited — except on a book she typed in herself, where
+            there is no catalogue to defer to and she is the only source.
           */}
-          <div className="space-y-5 px-5 pt-5 pb-4">
-            {/* Facts the catalogue supplies and the schema has no field for. */}
-            {(draft.publishedYear || draft.pageCount || draft.publisher || draft.isbn13) && (
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium tracking-[0.04em] text-muted-foreground/80 uppercase">
-                {[
-                  draft.publishedYear,
-                  draft.pageCount ? `${draft.pageCount} pages` : null,
-                  draft.publisher,
-                  draft.isbn13 ? `ISBN ${formatIsbn(draft.isbn13)}` : null,
-                ]
-                  .filter(Boolean)
-                  .map((fact, index) => (
-                    <span key={fact as string} className="flex items-center gap-2">
-                      {index > 0 && <span className="text-muted-foreground/40">·</span>}
-                      {fact}
-                    </span>
+          <div className="space-y-6 px-5 pt-5 pb-4">
+            <div>
+              {editableIdentity ? (
+                <div className="space-y-4">
+                  <Field label="Title">
+                    <Input
+                      value={draft.title}
+                      onChange={(event) => set('title', event.target.value)}
+                      onBlur={() => void persist({ title: draft.title })}
+                      placeholder="Title"
+                      className="text-base"
+                    />
+                  </Field>
+                  <Field label="Author">
+                    <Input
+                      value={draft.authors.join(', ')}
+                      onChange={(event) =>
+                        set(
+                          'authors',
+                          event.target.value.split(',').map((a) => a.trim()).filter(Boolean),
+                        )
+                      }
+                      onBlur={() => void persist({ authors: draft.authors })}
+                      placeholder="Author"
+                      className="text-base"
+                    />
+                  </Field>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-[26px] leading-[1.18] font-semibold tracking-[-0.03em]">
+                    {draft.title || 'Untitled book'}
+                  </h2>
+                  <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+                    {draft.authors.length ? draft.authors.join(', ') : 'Unknown author'}
+                  </p>
+                </>
+              )}
+
+              {(draft.publishedYear || draft.pageCount || draft.publisher) && (
+                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium tracking-[0.04em] text-muted-foreground/80 uppercase">
+                  {[
+                    draft.publishedYear,
+                    draft.pageCount ? `${draft.pageCount} pages` : null,
+                    draft.publisher,
+                  ]
+                    .filter(Boolean)
+                    .map((fact, index) => (
+                      <span key={fact as string} className="flex items-center gap-2">
+                        {index > 0 && <span className="text-muted-foreground/40">·</span>}
+                        {fact}
+                      </span>
+                    ))}
+                </div>
+              )}
+
+              {draft.genres && draft.genres.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {draft.genres.map((genre) => (
+                    <Badge key={genre} variant="secondary" className="rounded-full font-medium">
+                      {genre}
+                    </Badge>
                   ))}
+                </div>
+              )}
+            </div>
+
+            {/* About sits above the controls: what the book *is* before what
+                she has done with it. */}
+            {editableIdentity ? (
+              <div>
+                <SectionLabel>About</SectionLabel>
+                <Textarea
+                  value={draft.summary ?? ''}
+                  onChange={(event) => set('summary', event.target.value)}
+                  onBlur={() => void persist({ summary: draft.summary })}
+                  placeholder="A line or two about it"
+                  rows={3}
+                  className="resize-none text-base"
+                />
               </div>
+            ) : (
+              draft.summary && (
+                <div>
+                  <SectionLabel>About</SectionLabel>
+                  <p className="text-[13.5px] leading-[1.65] text-foreground/80">{draft.summary}</p>
+                </div>
+              )
             )}
 
-            <Field label="Title">
-              <Input
-                value={draft.title}
-                onChange={(event) => set('title', event.target.value)}
-                onBlur={() => void persist({ title: draft.title })}
-                placeholder="Title"
-                className="text-base"
-              />
-            </Field>
-
-            <Field label="Author">
-              <Input
-                value={draft.authors.join(', ')}
-                onChange={(event) =>
-                  set(
-                    'authors',
-                    event.target.value.split(',').map((a) => a.trim()).filter(Boolean),
-                  )
-                }
-                onBlur={() => void persist({ authors: draft.authors })}
-                placeholder="Author"
-                className="text-base"
-              />
-            </Field>
-
-            <Field label="Reading">
+            <div>
+              <SectionLabel>Reading</SectionLabel>
               <div className="flex gap-1.5">
                 {READ_STATES.map((state) => (
                   <Button
@@ -200,9 +255,10 @@ export function BookSheet({
                   </Button>
                 ))}
               </div>
-            </Field>
+            </div>
 
-            <Field label="Format">
+            <div>
+              <SectionLabel>Format</SectionLabel>
               <div className="flex gap-1.5">
                 {FORMATS.map((format) => (
                   <Button
@@ -219,63 +275,50 @@ export function BookSheet({
                   </Button>
                 ))}
               </div>
-            </Field>
+            </div>
 
-            {draft.genres && draft.genres.length > 0 && (
-              <Field label="Genre">
-                <div className="flex flex-wrap gap-1.5">
-                  {draft.genres.map((genre) => (
-                    <Badge key={genre} variant="secondary" className="rounded-full font-medium">
-                      {genre}
-                    </Badge>
-                  ))}
-                </div>
-              </Field>
+            {draft.isbn13 && (
+              <p className="font-mono text-[11px] tracking-wide text-muted-foreground/70">
+                ISBN {formatIsbn(draft.isbn13)}
+              </p>
             )}
 
-            <Field label="Summary">
-              <Textarea
-                value={draft.summary ?? ''}
-                onChange={(event) => set('summary', event.target.value)}
-                onBlur={() => void persist({ summary: draft.summary })}
-                placeholder="A line or two about it"
-                rows={3}
-                className="resize-none text-base"
-              />
-            </Field>
+            {/* A rule, not a boxed panel — below it is the part of the record
+                that is hers rather than the catalogue's. */}
+            <div className="space-y-4 border-t pt-6">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Shelf">
+                  <Input
+                    value={draft.location ?? ''}
+                    onChange={(event) => set('location', event.target.value)}
+                    onBlur={() => void persist({ location: draft.location })}
+                    placeholder="Living room"
+                    className="text-base"
+                  />
+                </Field>
+                <Field label="Copies">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={draft.copies}
+                    onChange={(event) => set('copies', Math.max(1, Number(event.target.value) || 1))}
+                    onBlur={() => void persist({ copies: draft.copies })}
+                    className="text-base"
+                  />
+                </Field>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Shelf">
-                <Input
-                  value={draft.location ?? ''}
-                  onChange={(event) => set('location', event.target.value)}
-                  onBlur={() => void persist({ location: draft.location })}
-                  placeholder="Living room"
-                  className="text-base"
-                />
-              </Field>
-              <Field label="Copies">
-                <Input
-                  type="number"
-                  min={1}
-                  value={draft.copies}
-                  onChange={(event) => set('copies', Math.max(1, Number(event.target.value) || 1))}
-                  onBlur={() => void persist({ copies: draft.copies })}
-                  className="text-base"
+              <Field label="Notes">
+                <Textarea
+                  value={draft.notes ?? ''}
+                  onChange={(event) => set('notes', event.target.value)}
+                  onBlur={() => void persist({ notes: draft.notes })}
+                  placeholder="Lent to someone, signed copy, anything"
+                  rows={2}
+                  className="resize-none text-base"
                 />
               </Field>
             </div>
-
-            <Field label="Notes">
-              <Textarea
-                value={draft.notes ?? ''}
-                onChange={(event) => set('notes', event.target.value)}
-                onBlur={() => void persist({ notes: draft.notes })}
-                placeholder="Lent to someone, signed copy, anything"
-                rows={2}
-                className="resize-none text-base"
-              />
-            </Field>
           </div>
         </div>
 
@@ -315,6 +358,15 @@ export function BookSheet({
         </div>
       </SheetContent>
     </Sheet>
+  )
+}
+
+/** Small caps label — the quiet tier that separates sections without a rule. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-2.5 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground/80 uppercase">
+      {children}
+    </p>
   )
 }
 
