@@ -75,29 +75,26 @@ export function TrendingView({ onOpenBook }: { onOpenBook: (book: Book) => void 
 
   return (
     <div className="flex h-full flex-col">
-      <div className="pt-safe shrink-0 border-b border-border bg-background px-6 pt-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-[28px] leading-none font-medium tracking-[-1px]">Trending</h1>
-            <p className="mt-2.5 text-[14px] leading-none tracking-[0.14px] text-muted-foreground uppercase">
-              What people are reading
+      <div className="pt-safe shrink-0 border-b bg-background/80 px-4 pt-3 backdrop-blur">
+        <div className="flex items-baseline justify-between pb-3">
+          <div>
+            <h1 className="font-display text-[30px] leading-none tracking-[-0.01em]">Trending</h1>
+            <p className="mt-1.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
+              What people are reading now
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => void load(window)}
             disabled={loading}
             aria-label="Refresh"
-            className="-mr-2 flex shrink-0 items-center justify-center rounded-full p-2 text-foreground transition-colors active:bg-accent"
           >
-            <RefreshCwIcon
-              className={cn('size-[18px]', loading && 'animate-spin')}
-              strokeWidth={1.75}
-            />
-          </button>
+            <RefreshCwIcon className={cn('size-4', loading && 'animate-spin')} />
+          </Button>
         </div>
 
-        <div className="flex gap-2 pt-4 pb-4">
+        <div className="flex gap-1.5 pb-3">
           {WINDOWS.map((option) => (
             <button
               key={option.value}
@@ -105,10 +102,10 @@ export function TrendingView({ onOpenBook }: { onOpenBook: (book: Book) => void 
               onClick={() => setWindow(option.value)}
               aria-pressed={window === option.value}
               className={cn(
-                'rounded-full border px-4 py-2 text-[13px] font-medium transition-colors',
+                'rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors',
                 window === option.value
-                  ? 'border-transparent bg-primary text-primary-foreground'
-                  : 'border-input bg-background text-muted-foreground active:bg-accent',
+                  ? 'border-transparent bg-linear-to-b from-primary-light to-primary text-primary-foreground'
+                  : 'border-border bg-background/60 text-muted-foreground hover:bg-accent',
               )}
             >
               {option.label}
@@ -117,7 +114,7 @@ export function TrendingView({ onOpenBook }: { onOpenBook: (book: Book) => void 
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {loading && results.length === 0 && (
           <div className="space-y-3 pt-1">
             {Array.from({ length: 8 }, (_, i) => (
@@ -200,57 +197,37 @@ function TrendingRow({
   onAdd: () => void
   onOpen: () => void
 }) {
-  const [covered, setCovered] = useState(false)
-
   return (
-    <div className="flex items-center gap-3 border-b border-border py-3">
-      <span className="w-4 shrink-0 text-right text-[15px] font-medium text-muted-foreground/70 tabular-nums">
+    <div className="flex items-center gap-3 rounded-[var(--radius-card)] bg-surface p-2.5 ring-1 ring-black/[0.06] dark:ring-white/[0.07]">
+      <span className="w-4 shrink-0 text-right font-display text-[15px] text-muted-foreground/60 tabular-nums">
         {rank}
       </span>
 
       <button
         type="button"
         onClick={owned ? onOpen : onAdd}
-        className="relative flex h-[68px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-media)]"
+        className="flex h-[68px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-media)] bg-surface-sunken p-1.5"
         aria-label={owned ? `Open ${result.title}` : `Add ${result.title}`}
       >
-        {/*
-          Layered, not branched. Open Library answers a missing cover with a
-          1×1 spacer rather than a 404, so `coverRemote` being set says nothing
-          about whether a jacket actually arrives — the tile has to hold its own
-          until one does.
-        */}
-        <span
-          className={cn(
-            'absolute inset-0 flex items-center justify-center rounded-[var(--radius-media)] bg-surface-sunken p-1 text-center text-[9px] leading-tight font-medium text-foreground/55 transition-opacity',
-            covered && 'opacity-0',
-          )}
-        >
-          <span className="line-clamp-4">{result.title}</span>
-        </span>
-
-        {result.coverRemote && (
+        {result.coverRemote ? (
           <img
             src={result.coverRemote}
             alt=""
             loading="lazy"
-            ref={(node) => {
-              if (node?.complete && node.naturalWidth > 2) setCovered(true)
-            }}
-            onLoad={(event) => setCovered(event.currentTarget.naturalWidth > 2)}
-            className={cn(
-              'relative size-full object-contain drop-shadow-[0_2px_6px_rgba(23,19,31,0.18)] transition-opacity',
-              covered ? 'opacity-100' : 'opacity-0',
-            )}
+            className="size-full object-contain drop-shadow-[0_2px_6px_rgba(23,19,31,0.18)]"
           />
+        ) : (
+          <span className="line-clamp-3 text-center text-[9px] leading-tight font-medium text-foreground/55">
+            {result.title}
+          </span>
         )}
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-[16px] leading-[1.25] font-medium tracking-[-0.5px] text-foreground">
+        <p className="line-clamp-2 font-display text-[16px] leading-[1.15] text-foreground">
           {result.title}
         </p>
-        <p className="mt-1 line-clamp-1 text-[14px] leading-[1.25] tracking-[-0.5px] text-muted-foreground">
+        <p className="mt-0.5 line-clamp-1 text-[12.5px] font-medium text-muted-foreground">
           {result.authors.length ? result.authors.join(', ') : 'Unknown author'}
         </p>
         {(result.publishedYear || result.genres?.[0]) && (

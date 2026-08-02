@@ -139,11 +139,11 @@ export function SettingsView({
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
-      <div className="pt-safe shrink-0 px-6 pt-3">
-        <h1 className="pb-5 text-[28px] leading-none font-medium tracking-[-1px]">Settings</h1>
+      <div className="pt-safe shrink-0 px-4 pt-3">
+        <h1 className="pb-4 font-display text-[30px] leading-none tracking-[-0.01em]">Settings</h1>
       </div>
 
-      <div className="space-y-7 px-6 pb-8">
+      <div className="space-y-7 px-4 pb-8">
         {/* Stats — one card, three columns, hairline dividers. Three separate
             tiles read as three unrelated facts; this reads as a summary. */}
         <div className="grid grid-cols-3 divide-x divide-black/[0.06] rounded-[var(--radius-card)] bg-surface py-4 ring-1 ring-black/[0.06] dark:divide-white/[0.07] dark:ring-white/[0.07]">
@@ -376,7 +376,7 @@ export function SettingsView({
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="px-2 text-center">
-      <p className="text-[26px] leading-none font-medium tracking-[-1px] tabular-nums">{value}</p>
+      <p className="font-display text-[26px] leading-none tabular-nums">{value}</p>
       <p className="mt-1.5 text-[10.5px] font-medium tracking-[0.07em] text-muted-foreground uppercase">
         {label}
       </p>

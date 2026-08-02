@@ -89,12 +89,7 @@ export default function App() {
         {tab === 'settings' && <SettingsView theme={theme} onToggleTheme={toggleTheme} />}
       </main>
 
-      {/*
-        Per the Figma: a hairline rule, 24px icons over 14px labels, and the
-        three tabs pulled in from the edges so they read as a cluster rather
-        than a stretched toolbar. Inactive tabs dim rather than change colour.
-      */}
-      <nav className="pb-safe grid shrink-0 grid-cols-3 border-t border-border bg-background px-8 pt-4 pb-1">
+      <nav className="pb-safe grid shrink-0 grid-cols-3 border-t border-border bg-background/90 backdrop-blur">
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = tab === id
           return (
@@ -103,11 +98,11 @@ export default function App() {
               type="button"
               onClick={() => setTab(id)}
               className={cn(
-                'flex flex-col items-center gap-1 pb-1 text-[13px] font-medium tracking-[-0.3px] transition-opacity',
-                active ? 'text-primary' : 'text-foreground/60',
+                'flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors',
+                active ? 'text-primary' : 'text-muted-foreground',
               )}
             >
-              <Icon className="size-6" strokeWidth={active ? 2.2 : 1.75} />
+              <Icon className="size-5" strokeWidth={active ? 2.4 : 1.9} />
               {label}
             </button>
           )

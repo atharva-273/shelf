@@ -1,22 +1,27 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/montserrat";
+@import "@fontsource-variable/manrope";
+@import "@fontsource/instrument-serif";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    /* Montserrat throughout, per the Figma type spec. Hierarchy comes from
-       weight and size — Medium (500) for anything that leads, Regular (400)
-       for anything that follows — not from a second typeface. */
-    --font-display: var(--font-sans);
+    /* Editorial display face for page titles and book titles; Manrope carries
+       every piece of UI text. The pairing is what gives the shelf a
+       bookshop feel rather than a dashboard one. */
+    --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
     --font-heading: var(--font-sans);
-    --font-sans: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
 
+    /* Card surfaces sit *above* the tinted page background. Keeping them as
+       separate tokens is what lets the page read as a surface with things
+       placed on it, instead of one flat sheet. */
     --color-surface: var(--surface);
     --color-surface-sunken: var(--surface-sunken);
 
-    /* 4px on media, straight from the Figma tiles. */
+    /* Crisp corners on anything showing a cover. Soft pills for controls,
+       sharp rectangles for artwork — the contrast is the point. */
     --radius-media: 4px;
     --radius-card: 6px;
 
@@ -70,43 +75,34 @@
 }
 
 :root {
-    /*
-      Greyscale ground with violet reserved for state, per the Figma. Text is
-      #333 rather than near-black — softer, and the reason the reference reads
-      as calm instead of high-contrast.
-    */
+    /* white / near-black / deep violet, with ochre as the single accent */
     --background: oklch(1 0 0);
-    --foreground: oklch(0.323 0 0); /* #333 */
+    --foreground: oklch(0.145 0.018 292);
 
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.323 0 0);
+    --card-foreground: oklch(0.145 0.018 292);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.323 0 0);
+    --popover-foreground: oklch(0.145 0.018 292);
 
     /* deep violet — saturated enough to never read as black */
     --primary: oklch(0.472 0.208 293);
     --primary-light: oklch(0.606 0.184 296);
     --primary-foreground: oklch(0.99 0.003 292);
 
-    --secondary: oklch(0.966 0 0);
-    --secondary-foreground: oklch(0.323 0 0);
+    --secondary: oklch(0.965 0.012 292);
+    --secondary-foreground: oklch(0.32 0.115 293);
 
-    --muted: oklch(0.968 0 0);
-    /*
-      Figma specifies #808080. Nudged one step darker to #757575 so secondary
-      text clears WCAG AA (4.6:1 vs 3.9:1) — visually indistinguishable at
-      these sizes, but #808080 fails on the 14px labels it's used for.
-    */
-    --muted-foreground: oklch(0.523 0 0);
+    --muted: oklch(0.968 0.008 292);
+    --muted-foreground: oklch(0.505 0.032 292);
 
-    --accent: oklch(0.961 0 0);
-    --accent-foreground: oklch(0.323 0 0);
+    /* shadcn's neutral hover token — deliberately NOT the ochre */
+    --accent: oklch(0.958 0.016 292);
+    --accent-foreground: oklch(0.32 0.115 293);
 
     --destructive: oklch(0.577 0.245 27.325);
 
-    /* #ccc on inputs, #ebebeb on structural rules — both from the Figma. */
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.844 0 0);
+    --border: oklch(0.916 0.009 292);
+    --input: oklch(0.916 0.009 292);
     --ring: oklch(0.472 0.208 293);
 
     /* Shelf accents */
@@ -122,19 +118,16 @@
     --chart-4: oklch(0.75 0.09 293);
     --chart-5: oklch(0.245 0.098 293);
 
-    /*
-      Background wash + grain, pulled well back. The Figma page is white, but
-      dropping the wash entirely loses the matte paper feel — so what's left is
-      barely a tint, enough to keep the grain from sitting on bare screen.
-    */
-    --wash-a: oklch(0.985 0.009 296);
-    --wash-b: oklch(0.99 0.007 86);
-    --grain-opacity: 0.028;
+    /* Background wash + grain */
+    --wash-a: oklch(0.955 0.028 296);
+    --wash-b: oklch(0.966 0.021 86);
+    --grain-opacity: 0.038;
 
-    /* Covers sit directly on the page now, so sunken is only used behind a
-       missing jacket — a neutral grey rather than the old violet tint. */
+    /* The page is faintly tinted; cards are white and lift off it. Sunken is
+       the panel a cover sits on — a shade *below* the page, so artwork reads
+       as placed into a recess rather than floating. */
     --surface: oklch(1 0 0);
-    --surface-sunken: oklch(0.966 0 0);
+    --surface-sunken: oklch(0.958 0.012 292);
 
     --radius: 0.875rem;
 
@@ -215,9 +208,8 @@
 
   html {
     @apply font-sans;
-    /* Montserrat is a wide face; the Figma sets everything on negative
-       tracking, and this is the baseline the per-element values build on. */
-    letter-spacing: -0.02em;
+    /* Manrope's default tracking is a touch loose for UI at small sizes. */
+    letter-spacing: -0.011em;
     }
 
   body {

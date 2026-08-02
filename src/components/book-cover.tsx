@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BookIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getCover } from '@/lib/db'
@@ -39,7 +39,6 @@ export function BookCover({
    */
   fit?: 'cover' | 'contain'
 }) {
-  const imgRef = useRef<HTMLImageElement | null>(null)
   const [localUrl, setLocalUrl] = useState<string | null>(null)
   const [stage, setStage] = useState<Stage>(() => firstStage(book, false))
   const [loaded, setLoaded] = useState(false)
@@ -70,13 +69,7 @@ export function BookCover({
   // Restart the chain if the underlying book changes.
   useEffect(() => {
     setStage(firstStage(book, Boolean(book.coverLocalKey && localUrl)))
-    // Not a plain `setLoaded(false)`. This effect runs *after* the commit that
-    // mounted the <img>, so on a cached image the ref callback below has
-    // already reported it loaded — blanking the flag here would strand the
-    // cover at opacity 0 forever, since `onLoad` has fired and won't fire
-    // again. Re-reading the element is the only source of truth at this point.
-    const image = imgRef.current
-    setLoaded(Boolean(image?.complete && image.naturalWidth > 2))
+    setLoaded(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book.id, book.coverRemote, book.coverId, book.isbn13])
 
@@ -115,34 +108,16 @@ export function BookCover({
         plain typographic jacket rather than an icon in an empty box — a book
         without artwork should still look like a book on the shelf.
       */}
-      {/*
-        Fades out once a real cover lands. It has to *fade* rather than be
-        swapped in a branch: tiles are transparent so the jacket can sit
-        uncropped on the page, and a permanently-layered placeholder would show
-        through the letterboxing on every book that does have artwork.
-      */}
-      <div
-        className={cn(
-          'absolute inset-0 flex items-center justify-center transition-opacity duration-200',
-          loaded && 'opacity-0',
-        )}
-      >
-        {/*
-          Sized to a jacket's own proportions rather than the tile's, so a book
-          with no artwork lines up with the books that have some instead of
-          reading as a grey block.
-        */}
-        <div className="flex aspect-2/3 h-full max-w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-media)] bg-surface-sunken p-3 text-center">
-          <BookIcon className="size-3.5 shrink-0 text-primary/35" />
-          <span
-            className={cn(
-              'line-clamp-4 leading-[1.2] font-medium tracking-[-0.5px] text-foreground/60',
-              size === 'S' ? 'text-[10px]' : 'text-[13px]',
-            )}
-          >
-            {book.title || 'Untitled'}
-          </span>
-        </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center">
+        <BookIcon className="size-3.5 shrink-0 text-primary/35" />
+        <span
+          className={cn(
+            'line-clamp-4 font-display leading-[1.2] text-foreground/60',
+            size === 'S' ? 'text-[10px]' : 'text-[13px]',
+          )}
+        >
+          {book.title || 'Untitled'}
+        </span>
       </div>
 
       {src && (
@@ -153,7 +128,6 @@ export function BookCover({
           loading="lazy"
           decoding="async"
           ref={(node) => {
-            imgRef.current = node
             // An image already in the HTTP cache finishes loading before React
             // attaches onLoad, so without this every tab switch re-runs the
             // fade and the placeholder flashes through a cover we already have.
@@ -162,7 +136,7 @@ export function BookCover({
           className={cn(
             'absolute inset-0 size-full transition-opacity duration-200',
             fit === 'contain'
-              ? 'object-contain drop-shadow-[0_2px_8px_rgba(23,19,31,0.16)]'
+              ? 'object-contain drop-shadow-[0_3px_10px_rgba(23,19,31,0.2)]'
               : 'bg-surface-sunken object-cover',
             loaded ? 'opacity-100' : 'opacity-0',
           )}

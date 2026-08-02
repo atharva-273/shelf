@@ -38,14 +38,6 @@ const STATUS_CHIPS: { value: StatusChip; label: string }[] = [
   { value: 'unread', label: 'Unread' },
 ]
 
-/**
- * The design draws header actions as plain 18px marks, not buttons. `p-2` on a
- * `gap-1` row gives a 34px tap target while keeping the *visual* gap at the
- * specified 20px (4 + 8 + 8).
- */
-const ICON_BUTTON =
-  'flex items-center justify-center rounded-full p-2 text-foreground transition-colors active:bg-accent'
-
 const SORTS: { value: SortKey; label: string }[] = [
   { value: 'recent', label: 'Recently added' },
   { value: 'title', label: 'Title A–Z' },
@@ -124,36 +116,24 @@ export function LibraryView({
 
   return (
     <div className="flex h-full flex-col">
-      {/*
-        Header geometry is taken from the Figma frame: 24px side margins, a
-        28px/Medium title over a 14px uppercase count, then the search row.
-        Flat white with a single hairline rule — no translucency, no blur.
-      */}
-      <div className="pt-safe shrink-0 border-b border-border bg-background px-6 pt-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-[28px] leading-none font-medium tracking-[-1px]">My Library</h1>
-            <p className="mt-2.5 text-[14px] leading-none tracking-[0.14px] text-muted-foreground uppercase">
+      <div className="pt-safe shrink-0 border-b bg-background/80 px-4 pt-3 backdrop-blur">
+        <div className="flex items-baseline justify-between pb-3">
+          <div>
+            <h1 className="font-display text-[30px] leading-none tracking-[-0.01em]">My Library</h1>
+            <p className="mt-1.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
               {books.length} {books.length === 1 ? 'title' : 'titles'}
               {totalCopies !== books.length && ` · ${totalCopies} copies`}
             </p>
           </div>
-
-          {/*
-            Bare 18px icons, 20px apart, per the design. The padding is
-            cancelled by the gap and the negative margin, so the tap target is
-            34px while the icons still read as unbuttoned marks on the page.
-          */}
-          <div className="-mr-2 flex shrink-0 items-center gap-1">
+          <div className="flex gap-0.5">
+            {/* Sort lives up here rather than beside the chips: at 375px the
+                two together left the chip row 220px for 272px of chips, and
+                "Unread" fell off the edge. */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className={ICON_BUTTON}
-                  aria-label={`Sort: ${SORTS.find((s) => s.value === sort)?.label}`}
-                >
-                  <ArrowUpDownIcon className="size-[18px]" strokeWidth={1.75} />
-                </button>
+                <Button variant="ghost" size="icon" aria-label={`Sort: ${SORTS.find((s) => s.value === sort)?.label}`}>
+                  <ArrowUpDownIcon className="size-4" />
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {SORTS.map((option) => (
@@ -168,68 +148,58 @@ export function LibraryView({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setLayout((l) => (l === 'grid' ? 'list' : 'grid'))}
               aria-label={layout === 'grid' ? 'Switch to list' : 'Switch to grid'}
-              className={ICON_BUTTON}
             >
               {layout === 'grid' ? (
-                <ListIcon className="size-[18px]" strokeWidth={1.75} />
+                <ListIcon className="size-4" />
               ) : (
-                <LayoutGridIcon className="size-[18px]" strokeWidth={1.75} />
+                <LayoutGridIcon className="size-4" />
               )}
-            </button>
-
-            <button
-              type="button"
-              onClick={onOpenSearch}
-              aria-label="Add a book"
-              className={ICON_BUTTON}
-            >
-              <PlusIcon className="size-[18px]" strokeWidth={1.75} />
-            </button>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onOpenSearch} aria-label="Add a book">
+              <PlusIcon className="size-4" />
+            </Button>
           </div>
         </div>
 
-        {/* 48px search pill and a matching 48px filter circle. */}
-        <div className="mt-4 flex items-center gap-3">
+        {/* Search + filter entry point */}
+        <div className="flex items-center gap-2 pb-3">
           <div className="relative flex flex-1 items-center">
-            <span className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-muted-foreground">
-              <SearchIcon className="size-[18px]" strokeWidth={1.75} />
+            <span className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-muted-foreground">
+              <SearchIcon className="size-4" />
             </span>
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search your shelf"
-              className="h-12 rounded-full border-input bg-background pl-12 text-[14px] font-medium placeholder:font-medium placeholder:text-muted-foreground"
+              className="pl-11"
               autoComplete="off"
             />
           </div>
-          <button
-            type="button"
+          <Button
+            variant={activeFilters > 0 ? 'default' : 'outline'}
+            size="icon"
             onClick={() => setFilterOpen(true)}
             aria-label={
               activeFilters > 0 ? `Filters, ${activeFilters} applied` : 'Filter your library'
             }
-            className={cn(
-              'relative flex size-12 shrink-0 items-center justify-center rounded-full border transition-colors',
-              activeFilters > 0
-                ? 'border-transparent bg-primary text-primary-foreground'
-                : 'border-input bg-background text-foreground active:bg-accent',
-            )}
+            className="relative shrink-0"
           >
-            <SlidersHorizontalIcon className="size-[18px]" strokeWidth={1.75} />
+            <SlidersHorizontalIcon className="size-4" />
             {activeFilters > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex size-4.5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-white tabular-nums">
+              <span className="absolute -top-1 -right-1 flex size-4.5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-white tabular-nums">
                 {activeFilters}
               </span>
             )}
-          </button>
+          </Button>
         </div>
 
-        {/* Status chips stay, below the search bar. */}
-        <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pt-4 pb-4">
+        {/* Status chips get the whole row now. */}
+        <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-3">
           {STATUS_CHIPS.map((chip) => (
             <Chip
               key={chip.value}
@@ -242,7 +212,7 @@ export function LibraryView({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-7">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {visible.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-14 text-center">
             <p className="text-sm text-muted-foreground">
@@ -262,9 +232,9 @@ export function LibraryView({
             )}
           </div>
         ) : layout === 'grid' ? (
-          // 164px tiles with a 24px gutter — two-up at 400px, widening on
-          // anything larger rather than adding a third cramped column.
-          <div className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 lg:grid-cols-4">
+          // Two columns, not three: the cover is the content here, and at
+          // three-up on a phone it's a thumbnail rather than a jacket.
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {visible.map((book) => (
               <GridCard key={book.id} book={book} onOpen={() => onOpenBook(book)} />
             ))}
@@ -276,7 +246,7 @@ export function LibraryView({
             ))}
           </div>
         )}
-        <div className="h-7" />
+        <div className="h-4" />
       </div>
 
       <FilterDrawer
@@ -302,9 +272,7 @@ function EmptyLibrary({ onAdd }: { onAdd: () => void }) {
         <BookPlusIcon className="size-8 text-primary" strokeWidth={1.6} />
       </div>
       <div className="max-w-xs space-y-2.5">
-        <h2 className="text-[26px] leading-tight font-medium tracking-[-1px]">
-          Your shelf is empty
-        </h2>
+        <h2 className="font-display text-[26px] leading-tight">Your shelf is empty</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Nothing catalogued yet. Add your first book and start building the library you'll
           actually want to show people.
@@ -333,10 +301,10 @@ function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'shrink-0 rounded-full border px-4 py-2 text-[13px] font-medium whitespace-nowrap transition-colors',
+        'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors',
         active
-          ? 'border-transparent bg-primary text-primary-foreground'
-          : 'border-input bg-background text-muted-foreground active:bg-accent',
+          ? 'border-transparent bg-linear-to-b from-primary-light to-primary text-primary-foreground'
+          : 'border-border bg-background/60 text-muted-foreground hover:bg-accent',
       )}
     >
       {children}
@@ -352,11 +320,14 @@ function FormatMark({ book, className }: { book: Book; className?: string }) {
 }
 
 /**
- * Jacket on the page, caption under it — no card container, no ring, no panel,
- * exactly as drawn. The tile keeps the design's 164×184 proportion and 4px
- * radius, but the jacket is *contained* rather than cropped: the mock's
- * placeholder is a landscape photo, whereas a real cover is roughly 2:3, and
- * filling this box would cut about 40% off it.
+ * The card is one object: a sunken panel holding the jacket, with the caption
+ * bedded into the same white surface underneath. Previously the cover and the
+ * text were separate things floating on the page, which is what made the
+ * spacing between them read as an accident.
+ *
+ * Cornered at 4px rather than the 6px card radius — the tile is mostly
+ * artwork, and a book jacket has square corners. Any softer and it starts to
+ * read as an app icon rather than a book.
  */
 function GridCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
   return (
@@ -364,30 +335,38 @@ function GridCard({ book, onOpen }: { book: Book; onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       aria-label={`${book.title || 'Untitled'} by ${authorLine(book)}`}
-      className="group flex flex-col text-left transition-transform active:scale-[0.985]"
+      className="group flex flex-col overflow-hidden rounded-[var(--radius-media)] bg-surface text-left ring-1 ring-black/[0.06] transition-all active:scale-[0.985] dark:ring-white/[0.07]"
     >
-      <div className="relative aspect-[164/184] w-full overflow-hidden rounded-[var(--radius-media)]">
-        <BookCover book={book} fit="contain" className="size-full bg-transparent" size="L" />
+      <div className="relative aspect-4/5 w-full overflow-hidden">
+        <BookCover book={book} fit="contain" className="size-full p-3.5" size="L" />
 
         {book.format !== 'physical' && (
-          <span className="absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-background/85 text-foreground/70 shadow-sm backdrop-blur">
+          <span className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-full bg-surface/85 text-foreground/70 shadow-sm backdrop-blur">
             <FormatMark book={book} className="size-3.5" />
           </span>
         )}
         {book.copies > 1 && (
-          <span className="absolute bottom-1.5 left-1.5 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-semibold text-background tabular-nums">
+          <span className="absolute bottom-2 left-2 rounded-full bg-foreground/80 px-2 py-0.5 text-[10px] font-semibold text-background tabular-nums">
             ×{book.copies}
           </span>
         )}
       </div>
 
-      {/* 8px to the title, 4px from title to author — measured off the frame. */}
-      <p className="mt-2 line-clamp-2 text-[16px] leading-[1.25] font-medium tracking-[-0.5px] text-foreground">
-        {book.title || 'Untitled'}
-      </p>
-      <p className="mt-1 line-clamp-1 text-[14px] leading-[1.25] tracking-[-0.5px] text-muted-foreground">
-        {authorLine(book)}
-      </p>
+      {/*
+        Hairline rather than a gap — the caption belongs to the cover.
+        No min-height on the title: reserving two lines put ~19px of dead air
+        between a one-line title and its author, which is exactly the gap that
+        made the old layout feel unresolved. Grid rows stretch to equal height
+        anyway, so the slack lands harmlessly at the bottom of the card instead.
+      */}
+      <div className="flex-1 border-t border-black/[0.05] px-3 py-2.5 dark:border-white/[0.06]">
+        <p className="line-clamp-2 font-display text-[15px] leading-[1.18] tracking-[-0.005em] text-foreground">
+          {book.title || 'Untitled'}
+        </p>
+        <p className="mt-1 line-clamp-1 text-[11.5px] leading-tight font-medium tracking-[0.005em] text-muted-foreground">
+          {authorLine(book)}
+        </p>
+      </div>
     </button>
   )
 }
@@ -398,19 +377,19 @@ function ListRow({ book, onOpen }: { book: Book; onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       aria-label={`${book.title || 'Untitled'} by ${authorLine(book)}`}
-      className="flex w-full items-center gap-3.5 border-b border-border py-3 text-left transition-opacity active:opacity-60"
+      className="flex w-full items-center gap-3.5 rounded-[var(--radius-card)] bg-surface p-2.5 text-left ring-1 ring-black/[0.06] transition-transform active:scale-[0.99] dark:ring-white/[0.07]"
     >
       <BookCover
         book={book}
         size="M"
         fit="contain"
-        className="h-[68px] w-[52px] shrink-0 rounded-[var(--radius-media)] bg-transparent"
+        className="h-[68px] w-[52px] shrink-0 rounded-[var(--radius-media)] p-1.5"
       />
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-1 text-[16px] leading-[1.25] font-medium tracking-[-0.5px] text-foreground">
+        <p className="line-clamp-1 font-display text-[16px] leading-tight text-foreground">
           {book.title || 'Untitled'}
         </p>
-        <p className="mt-1 line-clamp-1 text-[14px] leading-[1.25] tracking-[-0.5px] text-muted-foreground">
+        <p className="mt-0.5 line-clamp-1 text-[12.5px] font-medium text-muted-foreground">
           {authorLine(book)}
         </p>
         {book.genres?.length ? (
