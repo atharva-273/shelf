@@ -49,15 +49,6 @@ export function BookSheet({
 
   if (!draft) return null
 
-  /**
-   * Title and author are the catalogue's answer, not hers — editing them on a
-   * book she looked up would just let a typo overwrite Open Library. On a book
-   * typed in by hand there is no catalogue answer, so they become fields;
-   * `status: 'unresolved'` is included because a book that resolved to nothing
-   * has the same problem as one never looked up.
-   */
-  const editableIdentity = draft.source === 'manual' || draft.status === 'unresolved'
-
   const set = <K extends keyof Book>(key: K, value: Book[K]) =>
     setDraft((current) => (current ? { ...current, [key]: value } : current))
 
@@ -142,49 +133,42 @@ export function BookSheet({
           </div>
 
           {/*
-            Catalogue facts read; only what she owns about the book is a form.
-            Title, author and summary come from Open Library and are presented
-            rather than edited — except on a book she typed in herself, where
-            there is no catalogue to defer to and she is the only source.
+            Title and author are fields on every book, not just hand-added
+            ones. Open Library stores one canonical title per *work*, in the
+            original language — a probe of 25 well-known books returned 8 in
+            the wrong language and 1 wrong book entirely. There is no query
+            parameter that fixes that, and machine translation gets the
+            interesting cases backwards: Frankl's German title translates to
+            "Nevertheless, Say Yes to Life", but the English edition is called
+            "Man's Search for Meaning". One tap to correct beats both.
           */}
           <div className="space-y-6 px-5 pt-5 pb-4">
             <div>
-              {editableIdentity ? (
-                <div className="space-y-4">
-                  <Field label="Title">
-                    <Input
-                      value={draft.title}
-                      onChange={(event) => set('title', event.target.value)}
-                      onBlur={() => void persist({ title: draft.title })}
-                      placeholder="Title"
-                      className="text-base"
-                    />
-                  </Field>
-                  <Field label="Author">
-                    <Input
-                      value={draft.authors.join(', ')}
-                      onChange={(event) =>
-                        set(
-                          'authors',
-                          event.target.value.split(',').map((a) => a.trim()).filter(Boolean),
-                        )
-                      }
-                      onBlur={() => void persist({ authors: draft.authors })}
-                      placeholder="Author"
-                      className="text-base"
-                    />
-                  </Field>
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-[26px] leading-[1.18] font-semibold tracking-[-0.03em]">
-                    {draft.title || 'Untitled book'}
-                  </h2>
-                  <p className="mt-1.5 text-sm font-medium text-muted-foreground">
-                    {draft.authors.length ? draft.authors.join(', ') : 'Unknown author'}
-                  </p>
-                </>
-              )}
+              <div className="space-y-4">
+                <Field label="Title">
+                  <Input
+                    value={draft.title}
+                    onChange={(event) => set('title', event.target.value)}
+                    onBlur={() => void persist({ title: draft.title })}
+                    placeholder="Title"
+                    className="text-base"
+                  />
+                </Field>
+                <Field label="Author">
+                  <Input
+                    value={draft.authors.join(', ')}
+                    onChange={(event) =>
+                      set(
+                        'authors',
+                        event.target.value.split(',').map((a) => a.trim()).filter(Boolean),
+                      )
+                    }
+                    onBlur={() => void persist({ authors: draft.authors })}
+                    placeholder="Author"
+                    className="text-base"
+                  />
+                </Field>
+              </div>
 
               {(draft.publishedYear || draft.pageCount || draft.publisher) && (
                 <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium tracking-[0.04em] text-muted-foreground/80 uppercase">
